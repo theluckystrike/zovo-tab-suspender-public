@@ -418,8 +418,8 @@ async function suspendTabDirect(tabId, url, title, favicon) {
         const suspendedUrl = chrome.runtime.getURL(`suspended.html?${params.toString()}`);
         await chrome.tabs.update(tabId, { url: suspendedUrl });
 
-        // Stats are tracked by background.js via onUpdated listener
-        // No need to update here (prevents double-counting)
+        // Update stats locally since we're bypassing background.js suspendTab()
+        await updateMemoryStatsLocal(url);
 
         return true;
     } catch (error) {

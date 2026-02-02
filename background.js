@@ -398,8 +398,10 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
 });
 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-    // Note: Stats are already tracked in suspendTab() - no need to track here
-    // This prevents double-counting of memory saved
+    // Note: Stats are tracked in:
+    // - background.js suspendTab() for auto-suspend and message-based suspend
+    // - popup.js updateMemoryStatsLocal() for direct popup suspensions
+    // Do NOT add stats tracking here - it would cause double-counting
 
     // Handle URL changes (including SPA navigation via history API)
     if (changeInfo.url) {
