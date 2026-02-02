@@ -1,0 +1,240 @@
+/**
+ * Countdown Indicator Styles
+ *
+ * Styles for the per-tab countdown display showing time until suspension.
+ * Includes warning states and animations for critical countdown levels.
+ */
+
+/* ============================================ */
+/* Main Countdown Container */
+/* ============================================ */
+
+#countdown-container {
+  background: var(--bg-secondary, #1E293B);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: var(--radius-md, 8px);
+  padding: 12px 16px;
+  margin: 4px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+#countdown-container:hover {
+  border-color: var(--accent-primary, #6366F1);
+}
+
+/* ============================================ */
+/* Countdown Indicator */
+/* ============================================ */
+
+.countdown-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.countdown-label {
+  color: var(--text-secondary, #CBD5E1);
+  font-weight: 500;
+}
+
+.countdown-time {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  min-width: 50px;
+  text-align: center;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm, 6px);
+  background: var(--bg-tertiary, #334155);
+  color: var(--accent-primary, #6366F1);
+  transition: all 0.3s ease;
+}
+
+/* ============================================ */
+/* State: Normal */
+/* ============================================ */
+
+.countdown-indicator.normal .countdown-time {
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--accent-primary, #6366F1);
+}
+
+/* ============================================ */
+/* State: Warning (< 30 seconds) */
+/* ============================================ */
+
+.countdown-indicator.warning .countdown-time {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--warning, #F59E0B);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.countdown-indicator.warning .countdown-label {
+  color: var(--warning, #F59E0B);
+}
+
+/* ============================================ */
+/* State: Critical (< 10 seconds) */
+/* ============================================ */
+
+.countdown-indicator.critical .countdown-time {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--danger, #EF4444);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  animation: pulse-critical 0.8s ease-in-out infinite;
+}
+
+.countdown-indicator.critical .countdown-label {
+  color: var(--danger, #EF4444);
+  animation: pulse-text 0.8s ease-in-out infinite;
+}
+
+/* Pulse animation for critical state */
+@keyframes pulse-critical {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 12px 2px rgba(239, 68, 68, 0.3);
+  }
+}
+
+@keyframes pulse-text {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* ============================================ */
+/* State: Paused */
+/* ============================================ */
+
+.countdown-indicator.paused .countdown-time {
+  background: var(--bg-tertiary, #334155);
+  color: var(--text-tertiary, #94A3B8);
+  font-style: italic;
+}
+
+.countdown-indicator.paused .countdown-label {
+  color: var(--text-tertiary, #94A3B8);
+}
+
+/* ============================================ */
+/* Countdown Badge (inline, e.g., in tab list) */
+/* ============================================ */
+
+.countdown-badge {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.countdown-badge.normal {
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--accent-primary, #6366F1);
+}
+
+.countdown-badge.warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--warning, #F59E0B);
+}
+
+.countdown-badge.critical {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--danger, #EF4444);
+  animation: badge-pulse 0.8s ease-in-out infinite;
+}
+
+.countdown-badge.paused {
+  background: var(--bg-tertiary, #334155);
+  color: var(--text-tertiary, #94A3B8);
+}
+
+@keyframes badge-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* ============================================ */
+/* Tab Item with Countdown */
+/* ============================================ */
+
+.tab-item .countdown-badge {
+  margin-left: auto;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+/* Hide countdown for suspended/active tabs in list */
+.tab-item.suspended .countdown-badge,
+.tab-item.active .countdown-badge {
+  display: none;
+}
+
+/* ============================================ */
+/* Responsive Adjustments */
+/* ============================================ */
+
+@media (max-width: 350px) {
+  .countdown-indicator {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .countdown-time {
+    font-size: 16px;
+    min-width: 40px;
+    padding: 3px 8px;
+  }
+
+  .countdown-label {
+    font-size: 11px;
+  }
+}
+
+/* ============================================ */
+/* Dark Mode Adjustments */
+/* ============================================ */
+
+/* Already designed for dark mode as default */
+/* Light mode overrides can be added here if needed */
+
+/* ============================================ */
+/* Accessibility */
+/* ============================================ */
+
+/* Ensure animations respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .countdown-indicator.critical .countdown-time,
+  .countdown-indicator.critical .countdown-label,
+  .countdown-badge.critical {
+    animation: none;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .countdown-indicator.warning .countdown-time {
+    border: 2px solid var(--warning, #F59E0B);
+  }
+
+  .countdown-indicator.critical .countdown-time {
+    border: 2px solid var(--danger, #EF4444);
+  }
+}

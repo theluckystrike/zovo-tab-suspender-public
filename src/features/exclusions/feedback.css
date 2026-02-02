@@ -1,0 +1,366 @@
+/**
+ * Feedback Toast Styles for Tab Suspender Pro
+ *
+ * Toast notification for exclusion feedback after Suspend All action.
+ * Follows the dark theme design system from popup.css
+ */
+
+/* ============================================
+   Toast Container
+   ============================================ */
+
+.exclusion-toast {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  z-index: 1100;
+
+  /* Hidden by default */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(20px);
+
+  /* Animation */
+  transition:
+    opacity 0.3s ease,
+    visibility 0.3s ease,
+    transform 0.3s ease;
+
+  /* Prevent pointer events when hidden */
+  pointer-events: none;
+}
+
+.exclusion-toast.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.exclusion-toast.fadeout {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(20px);
+}
+
+/* ============================================
+   Toast Content
+   ============================================ */
+
+.toast-content {
+  background: var(--bg-secondary, #1E293B);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: var(--radius-lg, 12px);
+  padding: 12px 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+
+  /* Subtle gradient border effect */
+  background-image: linear-gradient(
+    to bottom,
+    rgba(99, 102, 241, 0.1),
+    transparent
+  );
+  background-size: 100% 2px;
+  background-position: top;
+  background-repeat: no-repeat;
+}
+
+.exclusion-toast.expanded .toast-content {
+  /* Slightly larger when expanded */
+  padding-bottom: 16px;
+}
+
+/* ============================================
+   Toast Header
+   ============================================ */
+
+.toast-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.toast-message {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #F8FAFC);
+  line-height: 1.4;
+}
+
+/* ============================================
+   Close Button
+   ============================================ */
+
+.toast-close {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm, 6px);
+  color: var(--text-tertiary, #94A3B8);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toast-close:hover,
+.toast-close:focus {
+  background: var(--bg-tertiary, #334155);
+  color: var(--text-primary, #F8FAFC);
+  outline: none;
+}
+
+.toast-close:focus-visible {
+  box-shadow: 0 0 0 2px var(--accent-primary, #6366F1);
+}
+
+.toast-close svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ============================================
+   Details Toggle Button
+   ============================================ */
+
+.toast-details-container {
+  margin-top: 8px;
+}
+
+.toast-details-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--bg-tertiary, #334155);
+  border: none;
+  border-radius: var(--radius-sm, 6px);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary, #CBD5E1);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toast-details-btn:hover,
+.toast-details-btn:focus {
+  background: rgba(99, 102, 241, 0.2);
+  color: var(--accent-primary, #6366F1);
+  outline: none;
+}
+
+.toast-details-btn:focus-visible {
+  box-shadow: 0 0 0 2px var(--accent-primary, #6366F1);
+}
+
+.details-btn-text {
+  /* Text */
+}
+
+.details-chevron {
+  transition: transform 0.2s ease;
+}
+
+.exclusion-toast.expanded .details-chevron {
+  transform: rotate(180deg);
+}
+
+/* ============================================
+   Details Panel
+   ============================================ */
+
+.toast-details {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+
+  /* Animation */
+  overflow: hidden;
+  max-height: 300px;
+  opacity: 1;
+  transition:
+    max-height 0.3s ease,
+    opacity 0.3s ease,
+    margin 0.3s ease,
+    padding 0.3s ease;
+}
+
+.toast-details.hidden {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+  padding-top: 0;
+  border-top-color: transparent;
+}
+
+/* ============================================
+   Exclusion Reasons List
+   ============================================ */
+
+.exclusion-reasons-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.exclusion-reason {
+  display: grid;
+  grid-template-columns: 20px 1fr auto;
+  grid-template-rows: auto auto;
+  gap: 4px 8px;
+  align-items: center;
+  padding: 8px 10px;
+  background: var(--bg-primary, #0F172A);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: var(--radius-sm, 6px);
+  transition: border-color 0.2s ease;
+}
+
+.exclusion-reason:hover {
+  border-color: var(--accent-primary, #6366F1);
+}
+
+/* Reason Icon */
+.reason-icon {
+  grid-column: 1;
+  grid-row: 1;
+  font-size: 14px;
+  line-height: 1;
+  text-align: center;
+}
+
+/* Reason Label */
+.reason-label {
+  grid-column: 2;
+  grid-row: 1;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary, #F8FAFC);
+}
+
+/* Reason Count */
+.reason-count {
+  grid-column: 3;
+  grid-row: 1;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-primary, #6366F1);
+  background: rgba(99, 102, 241, 0.1);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+/* Reason Tabs (tab titles) */
+.reason-tabs {
+  grid-column: 2 / 4;
+  grid-row: 2;
+  font-size: 10px;
+  color: var(--text-tertiary, #94A3B8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ============================================
+   Reason-Specific Colors
+   ============================================ */
+
+.exclusion-reason[data-reason="whitelist"] .reason-icon {
+  color: var(--success, #10B981);
+}
+
+.exclusion-reason[data-reason="pinned"] .reason-icon {
+  /* Emoji - no color override */
+}
+
+.exclusion-reason[data-reason="audio"] .reason-icon {
+  /* Emoji - no color override */
+}
+
+.exclusion-reason[data-reason="forms"] .reason-icon {
+  /* Emoji - no color override */
+}
+
+.exclusion-reason[data-reason="active"] .reason-icon {
+  /* Emoji - no color override */
+}
+
+.exclusion-reason[data-reason="alreadySuspended"] .reason-icon {
+  /* Emoji - no color override */
+}
+
+.exclusion-reason[data-reason="systemPages"] .reason-icon {
+  /* Emoji - no color override */
+}
+
+/* ============================================
+   Accessibility: Focus States
+   ============================================ */
+
+.toast-close:focus,
+.toast-details-btn:focus {
+  outline: none;
+}
+
+.toast-close:focus-visible,
+.toast-details-btn:focus-visible {
+  outline: 2px solid var(--accent-primary, #6366F1);
+  outline-offset: 2px;
+}
+
+/* ============================================
+   Accessibility: Reduced Motion
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .exclusion-toast,
+  .toast-details,
+  .details-chevron,
+  .toast-close,
+  .toast-details-btn,
+  .exclusion-reason {
+    transition: none;
+  }
+
+  .exclusion-toast.visible {
+    transform: none;
+  }
+
+  .exclusion-toast.fadeout {
+    transform: none;
+  }
+}
+
+/* ============================================
+   Mobile/Narrow Width Adjustments
+   ============================================ */
+
+@media (max-width: 400px) {
+  .exclusion-toast {
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+  }
+
+  .toast-content {
+    padding: 10px 12px;
+  }
+
+  .toast-message {
+    font-size: 12px;
+  }
+
+  .exclusion-reason {
+    padding: 6px 8px;
+  }
+
+  .reason-label {
+    font-size: 11px;
+  }
+}

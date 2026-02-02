@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=350, height=600">
+  <title>Tab Suspender Pro</title>
+  <link rel="stylesheet" href="popup.css">
+  <link rel="stylesheet" href="src/features/countdown/countdown.css">
+  <link rel="stylesheet" href="src/features/exclusions/feedback.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-top">
+        <div class="logo">
+          <img src="icons/icon32.png" alt="Tab Suspender Pro" class="logo-icon">
+          <span class="logo-text">Tab Suspender Pro</span>
+          <span class="header-pro-badge" id="headerProBadge" style="display: none;">PRO</span>
+        </div>
+        <button class="settings-btn" id="settingsBtn" title="Settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Hero Stats Section -->
+    <div class="hero-stats">
+      <div class="hero-stats-main">
+        <div class="hero-value" id="memorySaved">0 MB</div>
+        <div class="hero-label">SAVED TODAY</div>
+        <div class="hero-change" id="memoryChange">
+          <span class="change-icon">▲</span>
+          <span class="change-value">0%</span>
+        </div>
+      </div>
+      <div class="hero-progress">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        </div>
+        <div class="hero-stats-row">
+          <span class="hero-stat"><span id="suspendedCount">0</span> tabs</span>
+          <span class="hero-divider">·</span>
+          <span class="hero-stat"><span id="windowCount">0</span> windows</span>
+        </div>
+      </div>
+      <div class="hero-message" id="heroMessage">
+        "That's like closing Chrome and reopening it faster"
+      </div>
+    </div>
+
+    <!-- Countdown Indicator (AGENT 1) -->
+    <div id="countdown-container">
+      <div class="countdown-indicator paused">
+        <span class="countdown-label">Timer:</span>
+        <span class="countdown-time" id="countdown-time">Paused</span>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <button class="action-btn primary" id="suspendAllBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="6" y="4" width="4" height="16"></rect>
+          <rect x="14" y="4" width="4" height="16"></rect>
+        </svg>
+        Suspend All
+      </button>
+      <button class="action-btn secondary" id="restoreAllBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        </svg>
+        Restore All
+      </button>
+      <button class="action-btn outline" id="whitelistBtn" title="Whitelist current site">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Focus Mode Section -->
+    <div class="focus-mode-section" id="focusModeSection">
+      <div class="focus-mode-header">
+        <div class="focus-mode-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+          <span>Focus Mode</span>
+        </div>
+        <span class="pro-badge">PRO</span>
+      </div>
+      <div class="focus-mode-description">
+        Suspend all tabs except current. Perfect for deep work.
+      </div>
+      <button class="focus-mode-btn" id="focusModeBtn">
+        <span id="focusModeBtnText">Try Free (3 left)</span>
+      </button>
+      <div class="focus-mode-active" id="focusModeActive" style="display: none;">
+        <div class="focus-active-header">
+          <span class="focus-active-icon">🎯</span>
+          <span class="focus-active-text">Focus Mode Active</span>
+        </div>
+        <div class="focus-active-info">
+          <p><span id="focusSuspendedCount">0</span> tabs suspended</p>
+          <p class="focus-current-tab" id="focusCurrentTab">Focusing on: Current Tab</p>
+        </div>
+        <button class="focus-exit-btn" id="focusExitBtn">Exit Focus Mode</button>
+      </div>
+    </div>
+
+    <!-- License Section -->
+    <div class="license-section" id="licenseSection">
+      <div class="license-prompt" id="licensePrompt">
+        <h3>🔑 Have a Pro License?</h3>
+        <p>Unlock unlimited Focus Mode, Tab Groups & more</p>
+        <div class="license-input-group">
+          <input
+            type="text"
+            id="licenseInput"
+            placeholder="ZOVO-XXXX-XXXX-XXXX-XXXX"
+            maxlength="29"
+          />
+          <button id="activateBtn" class="action-btn primary small">Activate</button>
+        </div>
+        <div id="licenseStatus" class="license-status"></div>
+        <div class="license-footer">
+          <a href="#" id="getLicenseLink" class="get-license-link">
+            Get Pro License →
+          </a>
+        </div>
+      </div>
+
+      <div class="license-active" id="licenseActive" style="display: none;">
+        <div class="pro-badge-large">✅ Pro License Active</div>
+        <p class="license-info">All Pro features unlocked</p>
+      </div>
+    </div>
+
+    <!-- Tab List -->
+    <div class="tabs-container">
+      <div class="tabs-header">
+        <span class="tabs-title">Open Tabs</span>
+        <span class="tabs-filter">
+          <select id="filterSelect">
+            <option value="all">All</option>
+            <option value="active">Active</option>
+            <option value="suspended">Suspended</option>
+            <option value="idle">Idle</option>
+          </select>
+        </span>
+      </div>
+      <div class="tabs-list" id="tabsList">
+        <!-- Tabs will be populated by JavaScript -->
+        <div class="loading">Loading tabs...</div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <a href="https://zovo.one" target="_blank" class="zovo-link">
+        Powered by <strong>Zovo</strong>
+      </a>
+      <span class="version">v1.0.18</span>
+    </footer>
+  </div>
+
+  <!-- Exclusion Feedback Toast (AGENT 3) -->
+  <div id="exclusion-toast" class="exclusion-toast" role="alert" aria-live="polite" aria-atomic="true">
+    <div class="toast-content">
+      <div class="toast-header">
+        <span class="toast-message" id="exclusion-message"></span>
+        <button class="toast-close" id="exclusion-toast-close" aria-label="Close notification" tabindex="0">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="toast-details-container">
+        <button class="toast-details-btn" id="exclusion-details-toggle" aria-expanded="false" tabindex="0">
+          <span class="details-btn-text">Show details</span>
+          <svg class="details-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+        <div class="toast-details hidden" id="exclusion-details" aria-hidden="true">
+          <div class="exclusion-reasons-list" id="exclusion-reasons-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Email Capture Modal -->
+  <div class="modal-overlay" id="emailCaptureModal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">Unlock Feature</h2>
+      </div>
+      <div class="modal-body">
+        <p class="modal-description">Enter your email to continue and get a special offer.</p>
+        <input
+          type="email"
+          id="emailInput"
+          class="modal-email-input"
+          placeholder="you@example.com"
+          autocomplete="email"
+        />
+        <div id="emailError" class="email-error" style="display: none;">Please enter a valid email</div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn primary" id="modalContinueBtn">Continue</button>
+        <button class="modal-btn secondary" id="modalMaybeLaterBtn">Maybe Later</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
