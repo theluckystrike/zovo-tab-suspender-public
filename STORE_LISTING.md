@@ -1,12 +1,9 @@
-# Tab Suspender Pro - Chrome Web Store Listing
+# Tab Suspender Community Edition - Chrome Web Store Listing
 
 ## TITLE (45 characters max)
 ```
-Tab Suspender Pro - Save RAM by Zovo.one
+Tab Suspender - Save Memory & Speed Up Chrome
 ```
-
-Alternative options for A/B testing:
-- Auto Tab Suspender - Save Memory by Zovo.one [44 chars]
 
 
 ## SHORT DESCRIPTION (132 characters max)
@@ -22,7 +19,7 @@ Too many tabs open? Your browser is eating 4GB+ of RAM right now. Tab Suspender 
 
 WHY THIS EXISTS
 
-The Great Suspender was removed from Chrome Web Store for containing malware. Millions of users lost their favorite extension overnight. Tab Suspender Pro was built as the trustworthy replacement with the same workflow and same shortcuts but zero compromise on privacy.
+The Great Suspender was removed from Chrome Web Store for containing malware. Millions of users lost their favorite extension overnight. Tab Suspender Community Edition was built as the trustworthy replacement with the same workflow and same shortcuts but zero compromise on privacy.
 
 HOW IT WORKS
 
@@ -46,15 +43,15 @@ Alt+Shift+S suspends all other tabs
 Alt+R restores all suspended tabs
 Alt+W whitelists the current site
 
-POWER FEATURES
+ALL FEATURES INCLUDED
 
-Focus Mode suspends everything except your current tab. One click for deep work sessions. (Pro)
-
-Tab Groups let you suspend and restore entire projects together. (Pro)
-
-Session Snapshots save your complete tab setup to restore anytime. (Pro)
+Focus Mode suspends everything except your current tab. One click for deep work sessions.
 
 Memory Stats track how much RAM you have saved over time.
+
+Custom Timing from 5 minutes to 24 hours.
+
+Unlimited Whitelist for all your important sites.
 
 SETTINGS YOU CONTROL
 
@@ -67,7 +64,7 @@ PRIVACY BY DESIGN
 
 No accounts. No tracking. No analytics. No data collection. Your browsing stays on your device. Period.
 
-Full source code available at github.com/theluckystrike/tab-suspender-pro
+Full source code available at github.com/theluckystrike/zovo-tab-suspender-public
 
 MINIMAL PERMISSIONS EXPLAINED
 
@@ -78,14 +75,11 @@ Scripting permission detects forms and scroll position
 
 We never access your browsing history. We never send data to any server.
 
-FREE FOREVER
+COMPLETELY FREE
 
-Core tab suspension is completely free with no limits. Advanced features like Focus Mode, Tab Groups, and Session Snapshots available with Pro license.
+All features are free with no limits. This is a community edition with everything unlocked.
 
-Built by Zovo for people who value privacy and performance.
-
-Questions or feedback? Reach us at support@zovo.one
-Website at zovo.one
+Open source and community-maintained.
 ```
 
 
@@ -131,6 +125,6 @@ Free Forever
 No Tracking"
 
 Marquee (1400x560):
-"Tab Suspender Pro
+"Tab Suspender Community Edition
 Automatically suspend inactive tabs and reclaim your memory
 Free unlimited with no tracking"

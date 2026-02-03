@@ -45,20 +45,6 @@ const impactValue = document.getElementById('impactValue');
 const impactRank = document.getElementById('impactRank');
 const viewStatsBtn = document.getElementById('viewStatsBtn');
 
-// DOM Elements - License
-const licenseSection = document.getElementById('licenseSection');
-const licensePrompt = document.getElementById('licensePrompt');
-const licenseActive = document.getElementById('licenseActive');
-const activateLicenseBtn = document.getElementById('activateLicenseBtn');
-const licenseKeyDisplay = document.getElementById('licenseKeyDisplay');
-
-// DOM Elements - License Modal
-const licenseModal = document.getElementById('licenseModal');
-const licenseModalClose = document.getElementById('licenseModalClose');
-const licenseInput = document.getElementById('licenseInput');
-const licenseStatus = document.getElementById('licenseStatus');
-const activateBtn = document.getElementById('activateBtn');
-
 // DOM Elements - Toast
 const toast = document.getElementById('toast');
 const toastMessage = document.getElementById('toastMessage');
@@ -90,8 +76,6 @@ async function checkProStatus() {
     // Community Edition: All features unlocked by default
     if (unlockCustomTimingBtn) unlockCustomTimingBtn.style.display = 'none';
     if (customTimingSlider) customTimingSlider.style.display = 'flex';
-    if (licensePrompt) licensePrompt.style.display = 'none';
-    if (licenseSection) licenseSection.style.display = 'none';
 }
 
 // Load settings

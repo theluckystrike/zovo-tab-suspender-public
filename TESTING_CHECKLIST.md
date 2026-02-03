@@ -1,4 +1,4 @@
-# Tab Suspender Pro v1.0.3 - Testing Checklist
+# Tab Suspender Community Edition - Testing Checklist
 
 ## Pre-Testing Setup
 
@@ -8,7 +8,7 @@
 2. Navigate to chrome://extensions/
 3. Enable "Developer mode" (toggle in top-right)
 4. Click "Load unpacked"
-5. Select this directory: /Users/mike/Downloads/zovo-extensions-ready/tab-suspender-pro-v1.0.2
+5. Select the directory containing this extension
 ```
 
 ### 2. Verify Extension Loaded

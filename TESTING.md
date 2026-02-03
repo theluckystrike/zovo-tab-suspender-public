@@ -210,19 +210,12 @@ This document provides a comprehensive test checklist for verifying the function
 - [ ] Import restores settings correctly
 - [ ] Invalid import data handled gracefully
 
-### License Activation
-- [ ] License modal opens correctly
-- [ ] Valid license key activates Pro features
-- [ ] Invalid license shows error message
-- [ ] Offline fallback accepts ZOVO- prefixed keys
-
 ---
 
 ## 9. Error Handling
 
 - [ ] Extension handles tab close during suspension gracefully
 - [ ] Extension handles service worker restart gracefully
-- [ ] Network errors during license check don't crash extension
 - [ ] Invalid URLs handled without errors
 - [ ] Storage quota exceeded handled gracefully
 
