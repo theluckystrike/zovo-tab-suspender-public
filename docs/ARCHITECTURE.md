@@ -9,7 +9,7 @@ Tab Suspender Pro is a Chrome Extension (Manifest V3) that automatically suspend
 ## File Structure
 
 ```
-zovo-tab-suspender-pro/
+tab-suspender-community/
 ├── manifest.json          # Extension manifest (MV3)
 ├── background.js          # Service worker (core logic)
 ├── popup.html/js/css      # Extension popup UI
@@ -126,23 +126,13 @@ Used for data that should persist locally only.
   // Installation tracking
   "installDate": 1706800000000,   // Timestamp of first install
 
-  // License system
-  "licenseKey": "ZOVO-XXXX-XXXX-XXXX-XXXX",
-  "isPro": false,
-  "verifiedAt": 1706900000000,    // Last server verification
-  "serverSignature": "...",       // Server-provided signature
-
-  // Focus Mode
-  "focusModeTrials": 3,           // Remaining free trials
+  // Focus Mode sessions
   "focusSessions": [              // Focus mode session history
     {
       "timestamp": 1706900000000,
       "duration": 3600000         // Session duration in ms
     }
-  ],
-
-  // Email capture
-  "userEmail": "user@example.com"
+  ]
 }
 ```
 
@@ -339,25 +329,6 @@ const estimatedMemory = 50 * 1024 * 1024; // 50MB per tab
 
 ---
 
-## License System
-
-The extension uses a freemium model with server-side license verification.
-
-### Verification Flow
-
-1. On popup load: `checkLicense()` reads stored license
-2. If `isPro` and `licenseKey` exist, check `verifiedAt`
-3. If >24 hours since verification, call `reVerifyLicense()`
-4. Server validates at: `https://xggdjlurppfcytxqoozs.supabase.co/functions/v1/verify-extension-license`
-5. Offline grace period: 72 hours
-
-### License Key Format
-```
-ZOVO-XXXX-XXXX-XXXX-XXXX
-```
-
----
-
 ## Critical Paths for Feature Implementation
 
 ### For Countdown Indicator (Task 1)
@@ -406,7 +377,6 @@ Need to collect exclusion reasons during the suspension loop.
 
 ## Security Notes
 
-1. License verification requires server roundtrip
-2. Never trust localStorage alone for Pro status
-3. Offline grace period prevents lockout
-4. Email collection goes to Supabase backend
+1. All data is stored locally using Chrome's storage APIs
+2. No user tracking or data collection
+3. Community Edition - all features unlocked for free
