@@ -5,26 +5,28 @@
 let currentStep = 1;
 const totalSteps = 5;
 
-// DOM Elements
-const stepsContainer = document.getElementById('stepsContainer');
-const progressFill = document.getElementById('progressFill');
-const stepDots = document.getElementById('stepDots');
-const backBtn = document.getElementById('backBtn');
-const nextBtn = document.getElementById('nextBtn');
-const skipLink = document.getElementById('skipLink');
-
-// Setup elements
-const setupTimeout = document.getElementById('setupTimeout');
-const setupTimeoutValue = document.getElementById('setupTimeoutValue');
-
-// Demo elements
-const demoBtn = document.getElementById('demoBtn');
-const demoTab1 = document.getElementById('demoTab1');
-const demoTab2 = document.getElementById('demoTab2');
-const demoResult = document.getElementById('demoResult');
+// DOM Elements - initialized after DOMContentLoaded
+let stepsContainer, progressFill, stepDots, backBtn, nextBtn, skipLink;
+let setupTimeout, setupTimeoutValue;
+let demoBtn, demoTab1, demoTab2, demoResult;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    // Query DOM elements after DOM is ready
+    stepsContainer = document.getElementById('stepsContainer');
+    progressFill = document.getElementById('progressFill');
+    stepDots = document.getElementById('stepDots');
+    backBtn = document.getElementById('backBtn');
+    nextBtn = document.getElementById('nextBtn');
+    skipLink = document.getElementById('skipLink');
+    setupTimeout = document.getElementById('setupTimeout');
+    setupTimeoutValue = document.getElementById('setupTimeoutValue');
+    demoBtn = document.getElementById('demoBtn');
+    demoTab1 = document.getElementById('demoTab1');
+    demoTab2 = document.getElementById('demoTab2');
+    demoResult = document.getElementById('demoResult');
+
+    // Now initialize
     updateUI();
     setupEventListeners();
     createParticles();
@@ -32,9 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Setup Event Listeners
 function setupEventListeners() {
-    nextBtn.addEventListener('click', nextStep);
-    backBtn.addEventListener('click', prevStep);
-    skipLink.addEventListener('click', skipOnboarding);
+    if (nextBtn) nextBtn.addEventListener('click', nextStep);
+    if (backBtn) backBtn.addEventListener('click', prevStep);
+    if (skipLink) skipLink.addEventListener('click', skipOnboarding);
 
     // Timeout slider
     if (setupTimeout) {
@@ -64,7 +66,7 @@ function nextStep() {
         currentStep++;
         updateUI();
 
-        if (currentStep === totalSteps) {
+        if (currentStep === totalSteps && nextBtn) {
             // Last step - save settings and mark onboarding complete
             saveSettings();
             nextBtn.textContent = 'Get Started';
@@ -89,7 +91,9 @@ function updateUI() {
     });
 
     // Update progress bar
-    progressFill.style.width = `${(currentStep / totalSteps) * 100}%`;
+    if (progressFill) {
+        progressFill.style.width = `${(currentStep / totalSteps) * 100}%`;
+    }
 
     // Update dots
     document.querySelectorAll('.dot').forEach((dot, index) => {
@@ -109,15 +113,19 @@ function updateUI() {
     }
 
     // Update back button visibility
-    backBtn.classList.toggle('hidden', currentStep === 1);
+    if (backBtn) {
+        backBtn.classList.toggle('hidden', currentStep === 1);
+    }
 
     // Update next button text
-    if (currentStep === totalSteps) {
-        nextBtn.innerHTML = `Get Started <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-        nextBtn.onclick = finishOnboarding;
-    } else {
-        nextBtn.innerHTML = `Next <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>`;
-        nextBtn.onclick = nextStep;
+    if (nextBtn) {
+        if (currentStep === totalSteps) {
+            nextBtn.innerHTML = `Get Started <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+            nextBtn.onclick = finishOnboarding;
+        } else {
+            nextBtn.innerHTML = `Next <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>`;
+            nextBtn.onclick = nextStep;
+        }
     }
 }
 
@@ -133,24 +141,35 @@ function updateTimeoutDisplay() {
 
 // Run demo animation
 async function runDemo() {
+    if (!demoBtn) return;
     demoBtn.disabled = true;
 
     // Animate tabs being suspended
     setTimeout(() => {
-        demoTab1.classList.add('suspended');
-        demoTab1.querySelector('.demo-status').textContent = 'Suspended';
-        demoTab1.querySelector('.demo-status').className = 'demo-status suspended';
+        if (demoTab1) {
+            demoTab1.classList.add('suspended');
+            const status = demoTab1.querySelector('.demo-status');
+            if (status) {
+                status.textContent = 'Suspended';
+                status.className = 'demo-status suspended';
+            }
+        }
     }, 300);
 
     setTimeout(() => {
-        demoTab2.classList.add('suspended');
-        demoTab2.querySelector('.demo-status').textContent = 'Suspended';
-        demoTab2.querySelector('.demo-status').className = 'demo-status suspended';
+        if (demoTab2) {
+            demoTab2.classList.add('suspended');
+            const status = demoTab2.querySelector('.demo-status');
+            if (status) {
+                status.textContent = 'Suspended';
+                status.className = 'demo-status suspended';
+            }
+        }
     }, 600);
 
     setTimeout(() => {
-        demoBtn.style.display = 'none';
-        demoResult.classList.remove('hidden');
+        if (demoBtn) demoBtn.style.display = 'none';
+        if (demoResult) demoResult.classList.remove('hidden');
     }, 1000);
 }
 

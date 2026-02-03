@@ -1,46 +1,117 @@
 /**
  * Tab Suspender Pro - Content Script
- * 
+ *
  * Runs on web pages to detect activity and capture state
  */
 
 (function () {
+    // Global flag to track if extension context is still valid
+    // Once set to false, all chrome API calls will be skipped
+    let contextValid = true;
+
+    // Reference to the MutationObserver for cleanup
+    let observer = null;
+
+    // Helper function to check if extension context is still valid
+    function isContextValid() {
+        if (!contextValid) {
+            return false;
+        }
+        try {
+            const valid = chrome.runtime?.id !== undefined;
+            if (!valid) {
+                contextValid = false;
+            }
+            return valid;
+        } catch (e) {
+            // Any error checking context means context is invalid
+            contextValid = false;
+            return false;
+        }
+    }
+
+    // Mark context as invalid and clean up resources
+    function invalidateContext() {
+        if (!contextValid) return; // Already invalidated
+        contextValid = false;
+        // Disconnect observer if it exists
+        if (observer) {
+            try {
+                observer.disconnect();
+            } catch (e) {
+                // Silently ignore - observer may already be disconnected
+            }
+            observer = null;
+        }
+    }
+
+    // Safe wrapper for chrome.runtime.sendMessage that handles context invalidation
+    async function safeSendMessage(message) {
+        if (!contextValid) {
+            return undefined;
+        }
+        if (!isContextValid()) {
+            return undefined;
+        }
+        try {
+            return await chrome.runtime.sendMessage(message);
+        } catch (e) {
+            // Context invalidated - extension was reloaded/updated
+            // This is expected behavior, so we silently invalidate and return
+            if (e.message?.includes('Extension context invalidated') ||
+                e.message?.includes('message port closed') ||
+                e.message?.includes('Receiving end does not exist')) {
+                invalidateContext();
+                return undefined;
+            }
+            // For any other unexpected error, also invalidate to be safe
+            invalidateContext();
+            return undefined;
+        }
+    }
+
     // Track user activity
     let lastActivity = Date.now();
     let hasUnsavedForms = false;
 
-    // Activity events to track
-    const activityEvents = ['mousedown', 'keydown', 'scroll', 'mousemove', 'touchstart'];
+    // Activity events to track (removed mousemove - too noisy, fires 30-60x/second)
+    const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart'];
 
-    // Update activity timestamp
+    // Debounce settings - only notify background once per 30 seconds
+    const ACTIVITY_DEBOUNCE_MS = 30000;
+    let lastActivityNotification = 0;
+
+    // Update activity timestamp (debounced to prevent message flooding)
     function updateActivity() {
+        // Skip if context is invalid
+        if (!contextValid) return;
+
         lastActivity = Date.now();
-        chrome.runtime.sendMessage({
-            type: 'TAB_ACTIVITY',
-            timestamp: lastActivity
-        }).catch(() => { });
+
+        // Only send message if 30+ seconds since last notification
+        if (lastActivity - lastActivityNotification >= ACTIVITY_DEBOUNCE_MS) {
+            lastActivityNotification = lastActivity;
+            safeSendMessage({
+                type: 'TAB_ACTIVITY',
+                timestamp: lastActivity
+            });
+        }
     }
 
     // Check for unsaved form data
     function checkFormChanges() {
-        // Include contenteditable elements (Gmail, Notion, rich text editors)
-        const inputs = document.querySelectorAll('input, textarea, select, [contenteditable="true"]');
+        // Skip if context is invalid
+        if (!contextValid) return;
+
+        // NOTE: contenteditable elements (Gmail, Notion) are intentionally excluded
+        // They caused too many false positives (any pre-existing content = "unsaved")
+        const inputs = document.querySelectorAll('input, textarea, select');
         let changed = false;
 
         inputs.forEach(input => {
             // Skip password, file, hidden, and disabled inputs
             if (input.type === 'password' || input.type === 'file' ||
                 input.type === 'hidden' || input.disabled) return;
-
-            // Handle contenteditable elements
-            if (input.hasAttribute('contenteditable')) {
-                // Check if contenteditable has content
-                const content = input.innerHTML || input.textContent;
-                if (content && content.trim().length > 0) {
-                    changed = true;
-                }
-                return;
-            }
 
             if (input.type === 'checkbox' || input.type === 'radio') {
                 if (input.checked !== input.defaultChecked) changed = true;
@@ -51,10 +122,10 @@
 
         if (changed !== hasUnsavedForms) {
             hasUnsavedForms = changed;
-            chrome.runtime.sendMessage({
+            safeSendMessage({
                 type: 'FORM_STATUS',
                 hasUnsavedForms: changed
-            }).catch(() => { });
+            });
         }
     }
 
@@ -112,79 +183,126 @@
         window.scrollTo(x, y);
     }
 
-    // Listen for messages from background
-    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-        switch (message.type) {
-            case 'GET_TAB_STATE':
-                sendResponse({
-                    scrollPosition: getScrollPosition(),
-                    formData: getFormData(),
-                    lastActivity: lastActivity,
-                    hasUnsavedForms: hasUnsavedForms
-                });
-                break;
-
-            case 'RESTORE_STATE':
-                if (message.scrollPosition) {
-                    restoreScrollPosition(message.scrollPosition.x, message.scrollPosition.y);
+    // Listen for messages from background - wrapped in try-catch for context invalidation
+    try {
+        if (contextValid && chrome.runtime?.onMessage) {
+            chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+                // Skip processing if context has been invalidated
+                if (!contextValid) {
+                    return false;
                 }
-                if (message.formData) {
-                    restoreFormData(message.formData);
-                }
-                sendResponse({ success: true });
-                break;
 
-            case 'GET_ACTIVITY':
-                sendResponse({
-                    lastActivity: lastActivity,
-                    idleTime: Date.now() - lastActivity
-                });
-                break;
+                try {
+                    switch (message.type) {
+                        case 'GET_TAB_STATE':
+                            sendResponse({
+                                scrollPosition: getScrollPosition(),
+                                formData: getFormData(),
+                                lastActivity: lastActivity,
+                                hasUnsavedForms: hasUnsavedForms
+                            });
+                            break;
+
+                        case 'RESTORE_STATE':
+                            if (message.scrollPosition) {
+                                restoreScrollPosition(message.scrollPosition.x, message.scrollPosition.y);
+                            }
+                            if (message.formData) {
+                                restoreFormData(message.formData);
+                            }
+                            sendResponse({ success: true });
+                            break;
+
+                        case 'GET_ACTIVITY':
+                            sendResponse({
+                                lastActivity: lastActivity,
+                                idleTime: Date.now() - lastActivity
+                            });
+                            break;
+                    }
+                } catch (e) {
+                    // Silently handle any errors during message processing
+                    invalidateContext();
+                }
+                return true;
+            });
         }
-        return true;
-    });
+    } catch (e) {
+        // Context already invalid when trying to add listener - silently ignore
+        invalidateContext();
+    }
 
-    // Set up activity listeners
-    activityEvents.forEach(event => {
-        document.addEventListener(event, updateActivity, { passive: true });
-    });
+    // Set up activity listeners (only if context is valid)
+    if (contextValid) {
+        activityEvents.forEach(event => {
+            document.addEventListener(event, updateActivity, { passive: true });
+        });
 
-    // Set up form change detection
-    document.addEventListener('input', checkFormChanges, { passive: true });
-    document.addEventListener('change', checkFormChanges, { passive: true });
+        // Set up form change detection
+        document.addEventListener('input', checkFormChanges, { passive: true });
+        document.addEventListener('change', checkFormChanges, { passive: true });
+    }
 
     // Detect SPA navigation (URL changes without page reload)
     let lastUrl = location.href;
     const detectSpaNavigation = () => {
+        // Skip if context is invalid
+        if (!contextValid) return;
+
         if (location.href !== lastUrl) {
             lastUrl = location.href;
             // Reset form status on SPA navigation
             hasUnsavedForms = false;
-            chrome.runtime.sendMessage({
+            safeSendMessage({
                 type: 'FORM_STATUS',
                 hasUnsavedForms: false
-            }).catch(() => { });
-            // Re-check forms after navigation
-            setTimeout(checkFormChanges, 100);
+            });
+            // Re-check forms after navigation (only if context still valid)
+            setTimeout(() => {
+                if (contextValid) checkFormChanges();
+            }, 100);
         }
     };
 
-    // Listen for popstate (back/forward navigation)
-    window.addEventListener('popstate', detectSpaNavigation);
+    // Listen for popstate (back/forward navigation) - only if context valid
+    if (contextValid) {
+        window.addEventListener('popstate', detectSpaNavigation);
+    }
 
     // Use MutationObserver to detect SPA navigation via history.pushState
-    const observer = new MutationObserver(() => {
-        detectSpaNavigation();
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
+    // Store in module-level variable for cleanup on context invalidation
+    try {
+        if (contextValid && document.body) {
+            observer = new MutationObserver(() => {
+                // Skip if context is invalid
+                if (!contextValid) {
+                    try {
+                        observer.disconnect();
+                    } catch (e) {
+                        // Silently ignore
+                    }
+                    return;
+                }
+                detectSpaNavigation();
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+        }
+    } catch (e) {
+        // Silently handle any observer setup errors
+        observer = null;
+    }
 
-    // Initial form check after page load
-    if (document.readyState === 'complete') {
-        checkFormChanges();
-    } else {
-        window.addEventListener('load', checkFormChanges);
+    // Initial form check after page load (only if context valid)
+    if (contextValid) {
+        if (document.readyState === 'complete') {
+            checkFormChanges();
+        } else {
+            window.addEventListener('load', () => {
+                if (contextValid) checkFormChanges();
+            });
+        }
     }
 
     // Notify background that content script is ready
-    chrome.runtime.sendMessage({ type: 'CONTENT_SCRIPT_READY' }).catch(() => { });
+    safeSendMessage({ type: 'CONTENT_SCRIPT_READY' });
 })();

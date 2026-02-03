@@ -7,7 +7,13 @@
     <title>Tab Suspender Pro - Statistics Dashboard</title>
     <link rel="stylesheet" href="settings.css">
     <style>
-        /* Dashboard-specific styles */
+        /* Dashboard-specific styles - Zovo Brand Colors */
+        :root {
+            --accent-primary: #7C3AED;
+            --accent-secondary: #7C3AED;
+            --accent-gradient: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
+        }
+
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -16,12 +22,43 @@
         }
 
         .dashboard-card {
-            background: var(--bg-card);
+            background: linear-gradient(135deg, var(--bg-card) 0%, rgba(124, 58, 237, 0.03) 100%);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-lg);
             padding: 24px;
             text-align: center;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
+
+        .dashboard-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--accent-gradient);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(124, 58, 237, 0.15);
+            border-color: rgba(124, 58, 237, 0.3);
+        }
+
+        .dashboard-card:hover::before {
+            opacity: 1;
+        }
+
+        .dashboard-card:nth-child(1) { background: linear-gradient(135deg, var(--bg-card) 0%, rgba(124, 58, 237, 0.05) 100%); }
+        .dashboard-card:nth-child(2) { background: linear-gradient(135deg, var(--bg-card) 0%, rgba(16, 185, 129, 0.05) 100%); }
+        .dashboard-card:nth-child(3) { background: linear-gradient(135deg, var(--bg-card) 0%, rgba(59, 130, 246, 0.05) 100%); }
+        .dashboard-card:nth-child(4) { background: linear-gradient(135deg, var(--bg-card) 0%, rgba(245, 158, 11, 0.05) 100%); }
 
         .dashboard-card .card-value {
             font-size: 36px;
@@ -46,6 +83,7 @@
             border-radius: var(--radius-lg);
             padding: 24px;
             margin-bottom: 30px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
 
         .chart-header {
@@ -58,6 +96,7 @@
         .chart-title {
             font-size: 18px;
             font-weight: 600;
+            color: var(--text-primary);
         }
 
         .chart-period {
@@ -73,13 +112,13 @@
             font-size: 12px;
             color: var(--text-secondary);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.15s ease;
         }
 
         .period-btn.active,
         .period-btn:hover {
-            background: var(--accent-primary);
-            border-color: var(--accent-primary);
+            background: #7C3AED;
+            border-color: #7C3AED;
             color: white;
         }
 
@@ -122,15 +161,54 @@
         }
 
         .sites-card {
-            background: var(--bg-card);
+            background: linear-gradient(135deg, var(--bg-card) 0%, rgba(59, 130, 246, 0.03) 100%);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-lg);
             padding: 24px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .sites-card:hover {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Empty State Styles */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 32px 16px;
+            text-align: center;
+            color: var(--text-tertiary);
+        }
+
+        .empty-state-icon {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+            color: var(--text-tertiary);
+        }
+
+        .empty-state-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .empty-state-description {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            max-width: 200px;
         }
 
         .sites-card h3 {
             font-size: 16px;
             margin-bottom: 16px;
+            color: var(--text-primary);
         }
 
         .site-item {
@@ -153,14 +231,20 @@
         .site-count {
             font-size: 14px;
             font-weight: 600;
-            color: var(--accent-secondary);
+            color: #7C3AED;
         }
 
         .focus-stats {
-            background: var(--bg-card);
+            background: linear-gradient(135deg, var(--bg-card) 0%, rgba(124, 58, 237, 0.03) 100%);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-lg);
             padding: 24px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .focus-stats:hover {
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.1);
         }
 
         .focus-header {
@@ -174,11 +258,11 @@
             width: 40px;
             height: 40px;
             border-radius: 10px;
-            background: rgba(124, 58, 237, 0.1);
+            background: #EDE9FE;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--accent-secondary);
+            color: #7C3AED;
         }
 
         .focus-grid {
@@ -197,7 +281,7 @@
         .focus-stat-value {
             font-size: 24px;
             font-weight: 700;
-            color: var(--accent-secondary);
+            color: #7C3AED;
             margin-bottom: 4px;
         }
 
@@ -217,6 +301,286 @@
             }
         }
 
+        /* ========== SHARE YOUR IMPACT SECTION ========== */
+        .share-section {
+            margin-top: 30px;
+        }
+
+        .share-card {
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.05) 0%, rgba(109, 40, 217, 0.05) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+        }
+
+        .share-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .share-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: var(--accent-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .share-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0 0 4px 0;
+            color: var(--text-primary);
+        }
+
+        .share-subtitle {
+            font-size: 13px;
+            color: var(--text-tertiary);
+            margin: 0;
+        }
+
+        .share-preview {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .share-text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .share-text strong {
+            color: #10B981;
+            font-weight: 600;
+        }
+
+        .share-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .share-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            color: white;
+        }
+
+        .share-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .share-btn.twitter {
+            background: #000000;
+        }
+
+        .share-btn.twitter:hover {
+            background: #333333;
+        }
+
+        .share-btn.linkedin {
+            background: #0A66C2;
+        }
+
+        .share-btn.linkedin:hover {
+            background: #004182;
+        }
+
+        .share-btn.facebook {
+            background: #1877F2;
+        }
+
+        .share-btn.facebook:hover {
+            background: #0d65d9;
+        }
+
+        .share-btn.copy {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .share-btn.copy:hover {
+            background: #7C3AED;
+            color: white;
+            border-color: #7C3AED;
+        }
+
+        .share-btn.copy.copied {
+            background: #10B981;
+            border-color: #10B981;
+            color: white;
+        }
+
+        .share-cta {
+            text-align: center;
+            padding-top: 8px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .rate-link {
+            font-size: 13px;
+            color: #7C3AED;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.15s;
+        }
+
+        .rate-link:hover {
+            color: #6D28D9;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            .share-buttons {
+                flex-direction: column;
+            }
+
+            .share-btn {
+                justify-content: center;
+            }
+        }
+        /* ========== END SHARE SECTION ========== */
+
+        /* ========== MODERN BUTTON STYLES ========== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            border: none;
+        }
+
+        .btn-outline {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-outline:hover {
+            background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
+            border-color: #7C3AED;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
+        }
+
+        .btn-outline:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(124, 58, 237, 0.25);
+        }
+
+        .btn-outline svg {
+            opacity: 0.7;
+            transition: all 0.2s ease;
+        }
+
+        .btn-outline:hover svg {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .btn-danger {
+            color: var(--text-tertiary);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+            border-color: #EF4444;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.35);
+        }
+
+        .btn-danger:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+        }
+
+        .btn-danger:hover svg {
+            transform: rotate(180deg);
+        }
+        /* ========== END MODERN BUTTON STYLES ========== */
+
+        /* ========== MODERNIZED HEADER ========== */
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .logo-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(124, 58, 237, 0.2);
+        }
+
+        .logo-text h1 {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #7C3AED 0%, #EC4899 50%, #F59E0B 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 0;
+            animation: gradient-shift 3s ease infinite;
+            background-size: 200% 200%;
+        }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .tagline {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin: 0;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+        /* ========== END MODERNIZED HEADER ========== */
+
         /* ========== AGENT 2: DASHBOARD SYNC STYLES ========== */
         .stats-sync-bar {
             display: flex;
@@ -227,6 +591,7 @@
             border: 1px solid var(--border-color);
             border-radius: var(--radius-lg);
             margin-bottom: 20px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
 
         .stats-sync-info {
@@ -244,18 +609,18 @@
         }
 
         .stats-sync-indicator.syncing {
-            color: var(--accent-primary);
+            color: #7C3AED;
         }
 
         .stats-sync-indicator .sync-dot {
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background: #22c55e;
+            background: #10B981;
         }
 
         .stats-sync-indicator.syncing .sync-dot {
-            background: var(--accent-primary);
+            background: #7C3AED;
             animation: pulse 1s ease-in-out infinite;
         }
 
@@ -280,12 +645,12 @@
             font-size: 12px;
             color: var(--text-secondary);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.15s ease;
         }
 
         .stats-refresh-btn:hover {
-            background: var(--accent-primary);
-            border-color: var(--accent-primary);
+            background: #7C3AED;
+            border-color: #7C3AED;
             color: white;
         }
 
@@ -314,13 +679,28 @@
                 <div class="logo">
                     <img src="icons/icon48.png" alt="Tab Suspender Pro" class="logo-icon">
                     <div class="logo-text">
-                        <h1>Statistics Dashboard</h1>
-                        <span class="tagline">Your memory savings at a glance</span>
+                        <h1>Your Impact</h1>
+                        <span class="tagline">Memory savings & productivity stats</span>
                     </div>
                 </div>
                 <div class="header-actions">
-                    <button class="btn btn-outline" id="exportBtn">Export Data</button>
-                    <button class="btn btn-outline" id="resetBtn">Reset Stats</button>
+                    <button class="btn btn-outline" id="exportBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Export
+                    </button>
+                    <button class="btn btn-outline btn-danger" id="resetBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <polyline points="1 20 1 14 7 14"></polyline>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
+                            <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
+                        </svg>
+                        Reset
+                    </button>
                 </div>
             </div>
         </header>
@@ -431,6 +811,67 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Share Your Impact Section -->
+                <div class="share-section">
+                    <div class="share-card">
+                        <div class="share-header">
+                            <div class="share-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="18" cy="5" r="3"></circle>
+                                    <circle cx="6" cy="12" r="3"></circle>
+                                    <circle cx="18" cy="19" r="3"></circle>
+                                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="share-title">Share Your Impact</h3>
+                                <p class="share-subtitle">Help others discover smarter browsing</p>
+                            </div>
+                        </div>
+
+                        <div class="share-preview" id="sharePreview">
+                            <p class="share-text" id="shareText">
+                                🚀 I've saved <strong id="shareMemory">1.4 GB</strong> of memory by suspending <strong id="shareTabs">29</strong> tabs with Tab Suspender Pro! My browser is lightning fast now. Try it free!
+                            </p>
+                        </div>
+
+                        <div class="share-buttons">
+                            <button class="share-btn twitter" id="shareTwitter" title="Share on X (Twitter)">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                                </svg>
+                                <span>Post on X</span>
+                            </button>
+                            <button class="share-btn linkedin" id="shareLinkedIn" title="Share on LinkedIn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                                </svg>
+                                <span>LinkedIn</span>
+                            </button>
+                            <button class="share-btn facebook" id="shareFacebook" title="Share on Facebook">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                </svg>
+                                <span>Facebook</span>
+                            </button>
+                            <button class="share-btn copy" id="shareCopy" title="Copy to clipboard">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                                <span>Copy</span>
+                            </button>
+                        </div>
+
+                        <div class="share-cta">
+                            <a href="https://chromewebstore.google.com/detail/tab-suspender-pro/dedlngpcdkalmgbkchgcgacjfpbchbpf" target="_blank" class="rate-link">
+                                ⭐ Love it? Leave a 5-star review!
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
 
@@ -445,461 +886,7 @@
         </footer>
     </div>
 
-    <script>
-        // DOM Elements
-        const totalSaved = document.getElementById('totalSaved');
-        const tabsSuspended = document.getElementById('tabsSuspended');
-        const todaySaved = document.getElementById('todaySaved');
-        const avgDaily = document.getElementById('avgDaily');
-        const chartCanvas = document.getElementById('chartCanvas');
-        const topSites = document.getElementById('topSites');
-        const focusSessions = document.getElementById('focusSessions');
-        const focusTime = document.getElementById('focusTime');
-        const focusWeek = document.getElementById('focusWeek');
-        const exportBtn = document.getElementById('exportBtn');
-        const resetBtn = document.getElementById('resetBtn');
-
-        // ========== AGENT 2: DASHBOARD SYNC ELEMENTS ==========
-        const syncStatusEl = document.getElementById('stats-sync-status');
-        const lastUpdatedEl = document.getElementById('stats-last-updated');
-        const refreshBtn = document.getElementById('stats-refresh-btn');
-
-        let lastUpdateTimestamp = null;
-        let dashboardSyncEnabled = true;
-        // ========== END AGENT 2 ==========
-
-        let currentPeriod = 7;
-        let lastUpdatedInterval = null; // Track interval for cleanup
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', async () => {
-            // ========== AGENT 2: DASHBOARD SYNC INIT ==========
-            await checkDashboardSyncFeature();
-            if (dashboardSyncEnabled) {
-                setupStatsListener();
-                setupRefreshButton();
-                startLastUpdatedTimer();
-            }
-            // ========== END AGENT 2 ==========
-
-            await loadStats();
-            setupEventListeners();
-        });
-
-        // ========== AGENT 2: DASHBOARD SYNC FUNCTIONS ==========
-
-        /**
-         * Check if dashboard sync feature is enabled
-         */
-        async function checkDashboardSyncFeature() {
-            try {
-                const result = await chrome.storage.local.get('feature_flags_override');
-                const overrides = result.feature_flags_override || {};
-                dashboardSyncEnabled = overrides.DASHBOARD_SYNC !== false; // Default: enabled
-
-                if (!dashboardSyncEnabled) {
-                    // Hide sync bar if feature disabled
-                    const syncBar = document.getElementById('stats-sync-bar');
-                    if (syncBar) syncBar.style.display = 'none';
-                }
-            } catch (error) {
-                console.log('[DashboardSync] Feature check error:', error);
-            }
-        }
-
-        /**
-         * Listen for STATS_UPDATED broadcasts from background
-         */
-        function setupStatsListener() {
-            chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-                if (message.type === 'STATS_UPDATED') {
-                    console.log('[DashboardSync] Received STATS_UPDATED');
-                    handleStatsUpdate(message.stats, message.timestamp);
-                    sendResponse({ received: true });
-                }
-                return false;
-            });
-            console.log('[DashboardSync] Listener setup complete');
-        }
-
-        /**
-         * Handle incoming stats update
-         */
-        function handleStatsUpdate(stats, timestamp) {
-            lastUpdateTimestamp = timestamp || Date.now();
-
-            // Update sync status to show "Live"
-            updateSyncStatus(false);
-            updateLastUpdatedDisplay();
-
-            // Update the stats display
-            updateStatsDisplay(stats);
-
-            // Also refresh chart and top sites
-            loadChartData(currentPeriod);
-            loadTopSites();
-        }
-
-        /**
-         * Update stats display with new data
-         */
-        function updateStatsDisplay(stats) {
-            if (!stats) return;
-
-            totalSaved.textContent = formatBytes(stats.totalSaved || 0);
-            tabsSuspended.textContent = stats.lifetimeTabsSuspended || 0;
-            todaySaved.textContent = formatBytes(stats.todaySaved || 0);
-
-            // Calculate daily average
-            chrome.storage.local.get(['installDate']).then(result => {
-                const installDate = result.installDate || Date.now();
-                const days = Math.max(1, Math.ceil((Date.now() - installDate) / (24 * 60 * 60 * 1000)));
-                const avg = (stats.totalSaved || 0) / days;
-                avgDaily.textContent = formatBytes(avg);
-            });
-        }
-
-        /**
-         * Setup manual refresh button
-         */
-        function setupRefreshButton() {
-            if (!refreshBtn) return;
-
-            refreshBtn.addEventListener('click', async () => {
-                await manualRefresh();
-            });
-        }
-
-        /**
-         * Manually refresh stats
-         */
-        async function manualRefresh() {
-            updateSyncStatus(true); // Show syncing
-            refreshBtn.disabled = true;
-            refreshBtn.classList.add('syncing');
-
-            try {
-                // Request fresh stats
-                const response = await chrome.runtime.sendMessage({ type: 'REQUEST_STATS_SYNC' });
-
-                if (response && response.stats) {
-                    handleStatsUpdate(response.stats, Date.now());
-                } else {
-                    // Fallback to regular GET_STATS
-                    await loadStats();
-                }
-            } catch (error) {
-                console.error('[DashboardSync] Refresh failed:', error);
-                // Fallback to regular load
-                await loadStats();
-            } finally {
-                updateSyncStatus(false);
-                refreshBtn.disabled = false;
-                refreshBtn.classList.remove('syncing');
-            }
-        }
-
-        /**
-         * Update sync status indicator
-         */
-        function updateSyncStatus(isSyncing) {
-            if (!syncStatusEl) return;
-
-            const syncText = syncStatusEl.querySelector('.sync-text');
-
-            if (isSyncing) {
-                syncStatusEl.classList.add('syncing');
-                if (syncText) syncText.textContent = 'Syncing...';
-            } else {
-                syncStatusEl.classList.remove('syncing');
-                if (syncText) syncText.textContent = 'Live';
-            }
-        }
-
-        /**
-         * Update "Last updated" display
-         */
-        function updateLastUpdatedDisplay() {
-            if (!lastUpdatedEl || !lastUpdateTimestamp) return;
-
-            const text = formatLastUpdated(lastUpdateTimestamp);
-            lastUpdatedEl.textContent = `Last updated: ${text}`;
-        }
-
-        /**
-         * Format timestamp as human-readable "X ago"
-         */
-        function formatLastUpdated(timestamp) {
-            if (!timestamp) return 'Never';
-
-            const seconds = Math.floor((Date.now() - timestamp) / 1000);
-
-            if (seconds < 5) return 'Just now';
-            if (seconds < 60) return `${seconds}s ago`;
-
-            const minutes = Math.floor(seconds / 60);
-            if (minutes < 60) return `${minutes}m ago`;
-
-            const hours = Math.floor(minutes / 60);
-            if (hours < 24) return `${hours}h ago`;
-
-            return new Date(timestamp).toLocaleDateString();
-        }
-
-        /**
-         * Start timer to update "Last updated" display
-         */
-        function startLastUpdatedTimer() {
-            // Clear any existing interval first
-            if (lastUpdatedInterval) {
-                clearInterval(lastUpdatedInterval);
-            }
-            // Update every 10 seconds
-            lastUpdatedInterval = setInterval(() => {
-                updateLastUpdatedDisplay();
-            }, 10000);
-        }
-
-        // Clean up interval when page unloads to prevent memory leaks
-        window.addEventListener('beforeunload', () => {
-            if (lastUpdatedInterval) {
-                clearInterval(lastUpdatedInterval);
-            }
-        });
-        // ========== END AGENT 2 ==========
-
-        async function loadStats() {
-            try {
-                const response = await chrome.runtime.sendMessage({ type: 'GET_STATS' });
-
-                // Update overview cards
-                totalSaved.textContent = formatBytes(response.totalSaved || 0);
-                tabsSuspended.textContent = response.lifetimeTabsSuspended || 0;
-                todaySaved.textContent = formatBytes(response.todaySaved || 0);
-
-                // Calculate daily average
-                const result = await chrome.storage.local.get(['memoryStats', 'installDate']);
-                const installDate = result.installDate || Date.now();
-                const days = Math.max(1, Math.ceil((Date.now() - installDate) / (24 * 60 * 60 * 1000)));
-                const avg = (response.totalSaved || 0) / days;
-                avgDaily.textContent = formatBytes(avg);
-
-                // Load chart data
-                await loadChartData(currentPeriod);
-
-                // Load top sites
-                await loadTopSites();
-
-                // Load focus stats
-                await loadFocusStats();
-
-                // ========== AGENT 2: DASHBOARD SYNC ==========
-                // Update last updated timestamp on initial load
-                if (dashboardSyncEnabled) {
-                    lastUpdateTimestamp = Date.now();
-                    updateLastUpdatedDisplay();
-                }
-                // ========== END AGENT 2 ==========
-            } catch (error) {
-                console.error('Failed to load stats:', error);
-            }
-        }
-
-        async function loadChartData(days) {
-            try {
-                const result = await chrome.storage.local.get('memoryStats');
-                const history = result.memoryStats?.history || [];
-
-                // Group by date using UTC (prevents DST issues and year collision)
-                const byDay = {};
-                for (let i = 0; i < days; i++) {
-                    const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
-                    // Use UTC to avoid DST issues
-                    const key = `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()}`;
-                    byDay[key] = 0;
-                }
-
-                const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
-                history.filter(h => h.timestamp > cutoff).forEach(h => {
-                    const date = new Date(h.timestamp);
-                    // Use UTC to avoid DST issues
-                    const key = `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()}`;
-                    if (byDay[key] !== undefined) {
-                        byDay[key] += h.memorySaved || 0;
-                    }
-                });
-
-                // Render chart
-                const entries = Object.entries(byDay).reverse();
-                const maxValue = Math.max(...entries.map(([, v]) => v), 1);
-
-                chartCanvas.innerHTML = entries.map(([label, value]) => {
-                    const height = Math.max(20, (value / maxValue) * 200);
-                    // Format label as user-friendly date (e.g., "Jan 15" instead of "2025-1-15")
-                    const formattedLabel = formatChartLabel(label);
-                    return `
-            <div class="chart-bar" style="height: ${height}px" title="${formatBytes(value)}">
-              <span class="chart-bar-label">${formattedLabel}</span>
-            </div>
-          `;
-                }).join('');
-            } catch (error) {
-                console.error('Failed to load chart data:', error);
-            }
-        }
-
-        async function loadTopSites() {
-            try {
-                const result = await chrome.storage.local.get('memoryStats');
-                const history = result.memoryStats?.history || [];
-
-                // Count by domain
-                const byDomain = {};
-                history.forEach(h => {
-                    try {
-                        const domain = new URL(h.url).hostname;
-                        byDomain[domain] = (byDomain[domain] || 0) + 1;
-                    } catch (e) { }
-                });
-
-                // Sort by count (descending), then alphabetically for tie-breaking
-                const sorted = Object.entries(byDomain)
-                    .sort((a, b) => {
-                        if (b[1] !== a[1]) return b[1] - a[1]; // Primary: by count descending
-                        return a[0].localeCompare(b[0]); // Secondary: alphabetical for ties
-                    })
-                    .slice(0, 5);
-
-                if (sorted.length === 0) {
-                    topSites.innerHTML = '<p style="color: var(--text-tertiary); text-align: center; padding: 20px;">No data yet</p>';
-                    return;
-                }
-
-                topSites.innerHTML = sorted.map(([domain, count]) => `
-          <div class="site-item">
-            <span class="site-domain">${domain}</span>
-            <span class="site-count">${count}x</span>
-          </div>
-        `).join('');
-            } catch (error) {
-                console.error('Failed to load top sites:', error);
-            }
-        }
-
-        async function loadFocusStats() {
-            try {
-                const result = await chrome.storage.local.get('focusSessions');
-                const sessions = result.focusSessions || [];
-
-                focusSessions.textContent = sessions.length;
-
-                const totalMs = sessions.reduce((sum, s) => sum + (s.duration || 0), 0);
-                const totalMinutes = Math.floor(totalMs / (60 * 1000));
-                const hours = Math.floor(totalMinutes / 60);
-                const minutes = totalMinutes % 60;
-
-                // Show hours and minutes (e.g., "2h 30m" or "45m" or "0m")
-                if (hours > 0 && minutes > 0) {
-                    focusTime.textContent = `${hours}h ${minutes}m`;
-                } else if (hours > 0) {
-                    focusTime.textContent = `${hours}h`;
-                } else {
-                    focusTime.textContent = `${minutes}m`;
-                }
-
-                const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-                const thisWeek = sessions.filter(s => s.timestamp > weekAgo).length;
-                focusWeek.textContent = thisWeek;
-            } catch (error) {
-                console.error('Failed to load focus stats:', error);
-            }
-        }
-
-        function setupEventListeners() {
-            // Period buttons
-            document.querySelectorAll('.period-btn').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    currentPeriod = parseInt(btn.dataset.period);
-                    await loadChartData(currentPeriod);
-                });
-            });
-
-            // Export
-            exportBtn.addEventListener('click', async () => {
-                const result = await chrome.storage.local.get(['memoryStats', 'focusSessions', 'installDate']);
-                const data = JSON.stringify(result, null, 2);
-                const blob = new Blob([data], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'tab-suspender-stats.json';
-                a.click();
-                URL.revokeObjectURL(url);
-            });
-
-            // Reset - clear all stats data completely
-            resetBtn.addEventListener('click', async () => {
-                if (confirm('Are you sure you want to reset all statistics? This cannot be undone.')) {
-                    // Clear all stats-related data
-                    await chrome.storage.local.remove([
-                        'memoryStats',
-                        'focusSessions',
-                        'installDate'
-                    ]);
-
-                    // Reset memoryStats to empty instead of just removing
-                    await chrome.storage.local.set({
-                        memoryStats: { totalSaved: 0, tabsSuspended: 0, history: [] },
-                        installDate: Date.now()
-                    });
-
-                    location.reload();
-                }
-            });
-        }
-
-        function formatBytes(bytes) {
-            // Validate input to prevent NaN/crashes
-            if (bytes === null || bytes === undefined || isNaN(bytes) || bytes < 0) {
-                return '0 B';
-            }
-            if (bytes === 0) return '0 B';
-            const k = 1024;
-            const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
-            const i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), sizes.length - 1);
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-        }
-
-        // Format chart labels as user-friendly dates (e.g., "Jan 15" instead of "2025-1-15")
-        function formatChartLabel(dateKey) {
-            try {
-                // Parse the key format "YYYY-M-D"
-                const parts = dateKey.split('-');
-                if (parts.length !== 3) return dateKey;
-
-                const year = parseInt(parts[0]);
-                const month = parseInt(parts[1]) - 1; // JavaScript months are 0-indexed
-                const day = parseInt(parts[2]);
-
-                // Use UTC to avoid DST issues
-                const date = new Date(Date.UTC(year, month, day));
-
-                // Format as "Jan 15" or "15" depending on space
-                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                return `${months[date.getUTCMonth()]} ${date.getUTCDate()}`;
-            } catch {
-                return dateKey;
-            }
-        }
-
-        // Get date key using UTC to avoid DST issues
-        function getDateKey(timestamp) {
-            const date = new Date(timestamp);
-            return `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()}`;
-        }
-    </script>
+    <script src="stats-dashboard.js"></script>
 </body>
 
 </html>

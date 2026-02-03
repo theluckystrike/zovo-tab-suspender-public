@@ -3,17 +3,38 @@
  * Handles tab list display and user interactions
  */
 
-// DOM Elements
+// DOM Elements - Core
 const tabsList = document.getElementById('tabsList');
 const memorySaved = document.getElementById('memorySaved');
 const suspendedCount = document.getElementById('suspendedCount');
-const totalTabs = document.getElementById('totalTabs');
-const totalSaved = document.getElementById('totalSaved');
+const totalTabCount = document.getElementById('totalTabCount');
 const suspendAllBtn = document.getElementById('suspendAllBtn');
 const restoreAllBtn = document.getElementById('restoreAllBtn');
 const whitelistBtn = document.getElementById('whitelistBtn');
 const settingsBtn = document.getElementById('settingsBtn');
 const filterSelect = document.getElementById('filterSelect');
+
+// DOM Elements - Hero Section
+const heroEmotion = document.getElementById('heroEmotion');
+const healthBarFill = document.getElementById('healthBarFill');
+const healthPercent = document.getElementById('healthPercent');
+
+// DOM Elements - Focus Mode Section
+const focusTaxText = document.getElementById('focusTaxText');
+const focusProBadge = document.getElementById('focusProBadge');
+const focusLockIcon = document.getElementById('focusLockIcon');
+const focusProof = document.getElementById('focusProof');
+
+// DOM Elements - Tab List Section
+const tabsToggle = document.getElementById('tabsToggle');
+const tabsExpanded = document.getElementById('tabsExpanded');
+const tabsSummaryText = document.getElementById('tabsSummaryText');
+const tabsChevron = document.getElementById('tabsChevron');
+
+// DOM Elements - License Modal
+const licenseModal = document.getElementById('licenseModal');
+const activateLicenseLink = document.getElementById('activateLicenseLink');
+const licenseModalClose = document.getElementById('licenseModalClose');
 
 let currentFilter = 'all';
 let tabsData = [];
@@ -26,14 +47,16 @@ const focusExitBtn = document.getElementById('focusExitBtn');
 const focusSuspendedCount = document.getElementById('focusSuspendedCount');
 const focusCurrentTab = document.getElementById('focusCurrentTab');
 const windowCount = document.getElementById('windowCount');
-const progressFill = document.getElementById('progressFill');
-const memoryChange = document.getElementById('memoryChange');
-const heroMessage = document.getElementById('heroMessage');
+// Removed: these elements no longer exist in UI
+// const progressFill = document.getElementById('progressFill');
+// const memoryChange = document.getElementById('memoryChange');
+// const heroMessage = document.getElementById('heroMessage');
 
 let focusModeTrialsLeft = 3;
 let isFocusModeActive = false;
 let isPro = false;
 let focusModeStartTime = null; // Track when Focus Mode was activated
+let focusModeSuspendedTabs = []; // Track tabs suspended by Focus Mode for restoration
 
 // Paywall Email Capture
 const PAYWALL_API = 'https://xggdjlurppfcytxqoozs.supabase.co/functions/v1/log-paywall-hit';
@@ -42,6 +65,28 @@ let savedUserEmail = '';
 
 // Operation locks to prevent race conditions
 let isOperationInProgress = false;
+
+// Helper function to check if extension context is still valid
+function isContextValid() {
+    return chrome.runtime?.id !== undefined;
+}
+
+// Safe wrapper for chrome.runtime.sendMessage that handles context invalidation
+async function safeSendMessage(message) {
+    if (!isContextValid()) {
+        return undefined;
+    }
+    try {
+        return await chrome.runtime.sendMessage(message);
+    } catch (e) {
+        // Context invalidated - extension was reloaded/updated
+        if (e.message?.includes('Extension context invalidated') ||
+            e.message?.includes('message port closed')) {
+            return undefined;
+        }
+        throw e;
+    }
+}
 
 // ========== AGENT 1: COUNTDOWN INDICATOR ==========
 // Countdown state
@@ -98,11 +143,95 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Event Listeners
 function setupEventListeners() {
-    suspendAllBtn.addEventListener('click', handleSuspendAll);
-    restoreAllBtn.addEventListener('click', handleRestoreAll);
-    whitelistBtn.addEventListener('click', handleWhitelist);
-    settingsBtn.addEventListener('click', handleSettings);
-    filterSelect.addEventListener('change', handleFilterChange);
+    if (suspendAllBtn) suspendAllBtn.addEventListener('click', handleSuspendAll);
+    if (restoreAllBtn) restoreAllBtn.addEventListener('click', handleRestoreAll);
+    if (whitelistBtn) whitelistBtn.addEventListener('click', handleWhitelist);
+    if (settingsBtn) settingsBtn.addEventListener('click', handleSettings);
+    if (filterSelect) filterSelect.addEventListener('change', handleFilterChange);
+
+    // Tab list toggle
+    if (tabsToggle) {
+        tabsToggle.addEventListener('click', toggleTabsList);
+    }
+
+    // License modal handlers
+    if (activateLicenseLink) {
+        activateLicenseLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showLicenseModal();
+        });
+    }
+
+    if (licenseModalClose) {
+        licenseModalClose.addEventListener('click', hideLicenseModal);
+    }
+
+    if (licenseModal) {
+        licenseModal.addEventListener('click', (e) => {
+            if (e.target === licenseModal) {
+                hideLicenseModal();
+            }
+        });
+    }
+
+    // Initialize tab list state from storage
+    initTabListState();
+}
+
+// Toggle tab list expand/collapse
+async function toggleTabsList() {
+    const isExpanded = tabsExpanded && tabsExpanded.style.display !== 'none';
+
+    if (tabsExpanded) {
+        tabsExpanded.style.display = isExpanded ? 'none' : 'block';
+    }
+
+    if (tabsChevron) {
+        tabsChevron.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
+    }
+
+    // Save preference to storage
+    try {
+        await chrome.storage.local.set({ tabListExpanded: !isExpanded });
+    } catch (e) {
+        console.log('Could not save tab list preference:', e);
+    }
+}
+
+// Initialize tab list state from storage
+async function initTabListState() {
+    try {
+        const result = await chrome.storage.local.get('tabListExpanded');
+        const isExpanded = result.tabListExpanded || false;
+
+        if (tabsExpanded) {
+            tabsExpanded.style.display = isExpanded ? 'block' : 'none';
+        }
+
+        if (tabsChevron) {
+            tabsChevron.style.transform = isExpanded ? 'rotate(180deg)' : 'rotate(0deg)';
+        }
+    } catch (e) {
+        console.log('Could not load tab list preference:', e);
+    }
+}
+
+// Show license activation modal
+function showLicenseModal() {
+    if (licenseModal) {
+        licenseModal.style.display = 'flex';
+        const input = document.getElementById('licenseInput');
+        if (input) input.focus();
+    }
+}
+
+// Hide license activation modal
+function hideLicenseModal() {
+    if (licenseModal) {
+        licenseModal.style.display = 'none';
+        const status = document.getElementById('licenseStatus');
+        if (status) status.style.display = 'none';
+    }
 }
 
 // Load Statistics - direct from storage as fallback
@@ -111,7 +240,7 @@ async function loadStats() {
     try {
         // Try messaging first
         try {
-            const response = await chrome.runtime.sendMessage({ type: 'GET_STATS' });
+            const response = await safeSendMessage({ type: 'GET_STATS' });
             console.log('[STATS] Background response:', response);
             if (response && !response.error) {
                 updateStatsDisplay(response);
@@ -148,111 +277,95 @@ async function loadStats() {
 // Update Stats Display
 async function updateStatsDisplay(stats) {
     const todayBytes = stats.todaySaved || 0;
+    const totalTabs = stats.totalTabs || 0;
+    const suspended = stats.tabsSuspended || 0;
 
-    // Hero value
+    // Hero value - memory saved
     if (memorySaved) {
         memorySaved.textContent = formatBytes(todayBytes);
     }
 
-    // Stats
-    if (suspendedCount) suspendedCount.textContent = stats.tabsSuspended || 0;
-    if (totalTabs) totalTabs.textContent = stats.totalTabs || 0;
-    if (totalSaved) totalSaved.textContent = formatBytes(stats.totalSaved || 0);
+    // Hero emotional copy
+    if (heroEmotion) {
+        heroEmotion.textContent = getEmotionalCopy(todayBytes);
+    }
 
-    // Window count (with proper grammar)
+    // Health bar - calculate percentage based on suspended tabs
+    if (healthBarFill && healthPercent) {
+        const percentage = totalTabs > 0 ? Math.round((suspended / totalTabs) * 100) : 0;
+        healthBarFill.style.width = percentage + '%';
+        healthPercent.textContent = percentage + '%';
+    }
+
+    // Stats
+    if (suspendedCount) suspendedCount.textContent = suspended;
+    if (totalTabCount) totalTabCount.textContent = totalTabs;
+
+    // Window count
     if (windowCount) {
         const windows = await chrome.windows.getAll();
         const count = windows.length;
         windowCount.textContent = count;
-        // Update parent text for proper grammar
-        const parentSpan = windowCount.closest('.hero-stat');
-        if (parentSpan) {
-            parentSpan.innerHTML = `<span id="windowCount">${count}</span> ${count === 1 ? 'window' : 'windows'}`;
-        }
     }
 
-    // Progress bar (target: 1GB per day)
-    if (progressFill) {
-        const targetBytes = 1024 * 1024 * 1024; // 1GB
-        const percentage = Math.min((todayBytes / targetBytes) * 100, 100);
-        progressFill.style.width = percentage + '%';
+    // Update tab summary text
+    if (tabsSummaryText) {
+        const windows = await chrome.windows.getAll();
+        const windowCnt = windows.length;
+        tabsSummaryText.textContent = `${totalTabs} tabs across ${windowCnt} ${windowCnt === 1 ? 'window' : 'windows'}`;
     }
 
-    // Memory change indicator
-    if (memoryChange) {
-        try {
-            const yesterdayBytes = await getYesterdayMemory();
-            if (yesterdayBytes > 0) {
-                const change = ((todayBytes - yesterdayBytes) / yesterdayBytes * 100).toFixed(1);
-                const changeIcon = memoryChange.querySelector('.change-icon');
-                const changeValue = memoryChange.querySelector('.change-value');
-
-                if (change > 0) {
-                    changeIcon.textContent = '▲';
-                    memoryChange.style.background = 'rgba(16, 185, 129, 0.1)';
-                    memoryChange.style.color = '#10B981';
-                } else if (change < 0) {
-                    changeIcon.textContent = '▼';
-                    memoryChange.style.background = 'rgba(239, 68, 68, 0.1)';
-                    memoryChange.style.color = '#EF4444';
-                }
-
-                changeValue.textContent = Math.abs(change) + '%';
-            }
-        } catch (e) {
-            console.log('Could not calculate change:', e);
-        }
-    }
-
-    // Hero message
-    if (heroMessage) {
-        const message = getHeroMessage(todayBytes);
-        heroMessage.textContent = `"${message}"`;
-    }
+    // Update focus tax
+    updateFocusTax(totalTabs - suspended); // Active tabs = total - suspended
 }
 
-// Get yesterday's memory for comparison
-async function getYesterdayMemory() {
-    try {
-        const result = await chrome.storage.local.get('memoryStats');
-        const stats = result.memoryStats || { history: [] };
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = yesterday.toDateString();
+// REMOVED: Dead code - getYesterdayMemory() was never called
+// REMOVED: Dead code - getHeroMessage() was never called
 
-        const yesterdayData = (stats.history || [])
-            .filter(h => new Date(h.timestamp).toDateString() === yesterdayStr)
-            .reduce((sum, h) => sum + h.memorySaved, 0);
-
-        return yesterdayData;
-    } catch (e) {
-        return 0;
-    }
-}
-
-// Get dynamic hero message based on bytes saved
-function getHeroMessage(bytes) {
+// Get emotional copy based on bytes saved (for hero section)
+function getEmotionalCopy(bytes) {
     const gb = bytes / (1024 * 1024 * 1024);
     const mb = bytes / (1024 * 1024);
 
-    if (gb >= 5) return "You're a memory-saving champion! 🏆";
-    if (gb >= 2) return "That's like getting a free RAM upgrade";
-    if (gb >= 1) return "That's like closing Chrome and reopening it 3x faster";
-    if (mb >= 500) return "You're making a difference, one tab at a time";
-    if (mb >= 100) return "Great start! Keep those tabs suspended";
-    if (mb >= 50) return "Every MB counts. You're doing great!";
-    return "Suspend more tabs to see the magic happen ✨";
+    if (gb >= 2) return "Beast mode. Your RAM is loving this 💪";
+    if (gb >= 1) return "Your browser thanks you 🙏";
+    if (mb >= 500) return "Your browser is breathing easier";
+    if (mb >= 100) return "Getting warmer...";
+    if (mb >= 50) return "Every MB counts";
+    return "Suspend tabs to free memory";
+}
+
+// Update focus tax display based on tab count
+function updateFocusTax(tabCount) {
+    if (!focusTaxText) return;
+
+    const bandwidthLost = tabCount * 4;
+    const cappedBandwidth = Math.min(bandwidthLost, 100);
+
+    focusTaxText.textContent = `${tabCount} tabs open = ${cappedBandwidth}% bandwidth lost`;
+
+    // Update styling based on severity
+    const focusTax = document.getElementById('focusTax');
+    if (focusTax) {
+        if (bandwidthLost >= 50) {
+            focusTax.style.color = '#EF4444'; // Red for critical
+        } else if (bandwidthLost >= 25) {
+            focusTax.style.color = '#F59E0B'; // Orange for warning
+        } else {
+            focusTax.style.color = 'var(--text-secondary)';
+        }
+    }
 }
 
 // Load Tabs - direct from Chrome API as fallback
 async function loadTabs() {
     try {
-        tabsList.innerHTML = '<div class="loading">Loading tabs...</div>';
+        if (tabsList) tabsList.innerHTML = '<div class="loading">Loading tabs...</div>';
 
         // Try messaging first
         let windows = null;
         try {
-            const response = await chrome.runtime.sendMessage({ type: 'GET_TAB_LIST' });
+            const response = await safeSendMessage({ type: 'GET_TAB_LIST' });
             if (response && Array.isArray(response) && response.length > 0) {
                 windows = response;
             }
@@ -281,7 +394,7 @@ async function loadTabs() {
         }
 
         if (!windows || windows.length === 0) {
-            tabsList.innerHTML = '<div class="empty-state"><p>No tabs found</p></div>';
+            if (tabsList) tabsList.innerHTML = '<div class="empty-state"><p>No tabs found</p></div>';
             return;
         }
 
@@ -289,12 +402,13 @@ async function loadTabs() {
         renderTabs(windows);
     } catch (error) {
         console.error('Error loading tabs:', error);
-        tabsList.innerHTML = '<div class="empty-state"><p>Error: ' + error.message + '</p></div>';
+        if (tabsList) tabsList.innerHTML = '<div class="empty-state"><p>Error: ' + error.message + '</p></div>';
     }
 }
 
 // Render Tabs
 function renderTabs(windows) {
+    if (!tabsList) return;
     tabsList.innerHTML = '';
 
     windows.forEach((win, winIndex) => {
@@ -385,7 +499,18 @@ function createTabItem(tab) {
 
         const action = actionBtn.dataset.action;
         if (action === 'suspend') {
-            await suspendTabDirect(tab.id, tab.url, tab.title, tab.favIconUrl);
+            const whitelistedDomains = await getWhitelistSettings();
+            if (isUrlWhitelisted(tab.url, whitelistedDomains)) {
+                // Show feedback that tab is whitelisted
+                actionBtn.textContent = 'Whitelisted';
+                actionBtn.disabled = true;
+                setTimeout(() => {
+                    actionBtn.textContent = 'Suspend';
+                    actionBtn.disabled = false;
+                }, 1500);
+                return;
+            }
+            await suspendTabDirect(tab.id, tab.url, tab.title, tab.favIconUrl, whitelistedDomains);
         } else {
             await restoreTabDirect(tab.id, tab.url);
         }
@@ -400,11 +525,59 @@ function createTabItem(tab) {
     return item;
 }
 
+// Get whitelist settings from storage
+async function getWhitelistSettings() {
+    try {
+        const result = await chrome.storage.sync.get('tabSuspenderSettings');
+        return result.tabSuspenderSettings?.whitelistedDomains || [];
+    } catch (error) {
+        console.error('[WHITELIST] Failed to get whitelist settings:', error);
+        return [];
+    }
+}
+
+// Check if URL is whitelisted
+function isUrlWhitelisted(url, whitelistedDomains) {
+    if (!url || !whitelistedDomains || whitelistedDomains.length === 0) {
+        return false;
+    }
+
+    try {
+        const urlObj = new URL(url);
+        let hostname = urlObj.hostname.toLowerCase();
+
+        // Normalize www prefix
+        const hostnameWithoutWww = hostname.startsWith('www.') ? hostname.slice(4) : hostname;
+
+        return whitelistedDomains.some(domain => {
+            const d = domain.toLowerCase();
+            const domainWithoutWww = d.startsWith('www.') ? d.slice(4) : d;
+
+            return hostname === d ||
+                   hostname === domainWithoutWww ||
+                   hostnameWithoutWww === d ||
+                   hostnameWithoutWww === domainWithoutWww ||
+                   hostname.endsWith('.' + d) ||
+                   hostname.endsWith('.' + domainWithoutWww) ||
+                   hostnameWithoutWww.endsWith('.' + d) ||
+                   hostnameWithoutWww.endsWith('.' + domainWithoutWww);
+        });
+    } catch {
+        return false;
+    }
+}
+
 // Direct suspend function (fallback)
-async function suspendTabDirect(tabId, url, title, favicon) {
+async function suspendTabDirect(tabId, url, title, favicon, whitelistedDomains = null) {
     try {
         // Don't suspend internal pages or already suspended
         if (isInternalUrl(url) || url.includes('suspended.html')) {
+            return false;
+        }
+
+        // Check whitelist if domains provided
+        if (whitelistedDomains && isUrlWhitelisted(url, whitelistedDomains)) {
+            console.log('[SUSPEND] Tab is whitelisted, skipping:', url);
             return false;
         }
 
@@ -519,12 +692,49 @@ async function handleSuspendAll() {
 // Basic suspend all (fallback without feedback)
 async function handleSuspendAllBasic() {
     try {
+        // Get whitelist and other settings
+        const settingsResult = await chrome.storage.sync.get('tabSuspenderSettings');
+        const settings = settingsResult.tabSuspenderSettings || {};
+        const whitelistedDomains = settings.whitelistedDomains || [];
+        const neverSuspendPinned = settings.suspendPinnedTabs === false;
+        const neverSuspendAudio = settings.neverSuspendAudio !== false;
+
         const tabs = await chrome.tabs.query({ active: false });
+        let suspendedCount = 0;
+
         for (const tab of tabs) {
-            if (tab.url && !isInternalUrl(tab.url) && !tab.url.includes('suspended.html')) {
-                await suspendTabDirect(tab.id, tab.url, tab.title, tab.favIconUrl);
+            // Skip if no URL
+            if (!tab.url) continue;
+
+            // Skip internal pages
+            if (isInternalUrl(tab.url)) continue;
+
+            // Skip already suspended
+            if (tab.url.includes('suspended.html')) continue;
+
+            // Skip whitelisted domains
+            if (isUrlWhitelisted(tab.url, whitelistedDomains)) {
+                console.log('[SUSPEND] Skipping whitelisted:', tab.url);
+                continue;
             }
+
+            // Skip pinned tabs if setting enabled
+            if (neverSuspendPinned && tab.pinned) {
+                console.log('[SUSPEND] Skipping pinned tab:', tab.title);
+                continue;
+            }
+
+            // Skip audio tabs if setting enabled
+            if (neverSuspendAudio && tab.audible) {
+                console.log('[SUSPEND] Skipping audio tab:', tab.title);
+                continue;
+            }
+
+            const success = await suspendTabDirect(tab.id, tab.url, tab.title, tab.favIconUrl, whitelistedDomains);
+            if (success) suspendedCount++;
         }
+
+        console.log('[SUSPEND] Basic suspend completed:', suspendedCount, 'tabs suspended');
 
         setTimeout(() => {
             loadStats();
@@ -549,8 +759,20 @@ async function handleSuspendAllEnhanced() {
         console.log('[EXCLUSION] Analysis:', {
             total: report.total,
             suspendable: report.suspendable,
-            excluded: report.excluded
+            excluded: report.excluded,
+            byReason: {
+                whitelist: report.byReason.whitelist.count,
+                pinned: report.byReason.pinned.count,
+                audio: report.byReason.audio.count,
+                forms: report.byReason.forms.count,
+                active: report.byReason.active.count,
+                alreadySuspended: report.byReason.alreadySuspended.count,
+                systemPages: report.byReason.systemPages.count
+            }
         });
+
+        // Get whitelist for double-checking
+        const whitelistedDomains = await getWhitelistSettings();
 
         // Step 2: Suspend all suspendable tabs
         let actualSuspended = 0;
@@ -561,7 +783,8 @@ async function handleSuspendAllEnhanced() {
                     fullTab.id,
                     fullTab.url,
                     fullTab.title,
-                    fullTab.favIconUrl
+                    fullTab.favIconUrl,
+                    whitelistedDomains
                 );
                 if (success) actualSuspended++;
             } catch (e) {
@@ -570,6 +793,7 @@ async function handleSuspendAllEnhanced() {
         }
 
         console.log('[EXCLUSION] Suspended:', actualSuspended, 'tabs');
+        console.log('[EXCLUSION] Summary: Tried to suspend', report.suspendableTabs.length, 'tabs, actually suspended:', actualSuspended);
 
         // Step 3: Show feedback toast
         showExclusionToast(report, actualSuspended);
@@ -597,18 +821,18 @@ function resetSuspendAllButton() {
     if (suspendAllBtn) {
         suspendAllBtn.disabled = false;
         suspendAllBtn.innerHTML = `
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <rect x="6" y="4" width="4" height="16"></rect>
             <rect x="14" y="4" width="4" height="16"></rect>
           </svg>
-          Suspend All
+          <span>Suspend All Tabs</span>
         `;
     }
 }
 
 // Check if URL is internal/special and should not be suspended
 function isInternalUrl(url) {
-    if (!url) return true;
+    if (!url) return false; // undefined URLs are NOT system pages - this was the bug!
     const internalPrefixes = [
         'chrome://', 'chrome-extension://', 'chrome-search://',
         'edge://', 'about:', 'file://', 'data:', 'blob:',
@@ -658,40 +882,131 @@ async function handleRestoreAll() {
 async function handleWhitelist() {
     try {
         const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (activeTab && activeTab.url) {
-            const domain = getDomain(activeTab.url);
 
-            // Save to storage directly
-            const result = await chrome.storage.sync.get('tabSuspenderSettings');
-            const settings = result.tabSuspenderSettings || { whitelistedDomains: [] };
+        // Check if we have a valid tab with URL
+        if (!activeTab) {
+            showWhitelistError('No active tab found');
+            return;
+        }
 
-            if (!settings.whitelistedDomains.includes(domain)) {
-                settings.whitelistedDomains.push(domain);
-                await chrome.storage.sync.set({ tabSuspenderSettings: settings });
-            }
+        if (!activeTab.url) {
+            showWhitelistError('Cannot whitelist this page');
+            return;
+        }
 
-            // Show feedback
-            whitelistBtn.innerHTML = `
+        // Check for internal/restricted URLs
+        const url = activeTab.url;
+        if (url.startsWith('chrome://') ||
+            url.startsWith('chrome-extension://') ||
+            url.startsWith('about:') ||
+            url.startsWith('edge://') ||
+            url.startsWith('brave://')) {
+            showWhitelistError('Cannot whitelist browser pages');
+            return;
+        }
+
+        const domain = getDomain(activeTab.url);
+
+        if (!domain || domain === 'Unknown') {
+            showWhitelistError('Invalid domain');
+            return;
+        }
+
+        // Save to storage directly with try-catch
+        let result;
+        try {
+            result = await chrome.storage.sync.get('tabSuspenderSettings');
+        } catch (storageError) {
+            console.error('[WHITELIST] Failed to read settings:', storageError);
+            showWhitelistError('Failed to read settings');
+            return;
+        }
+        const settings = result.tabSuspenderSettings || { whitelistedDomains: [] };
+
+        // Check if already whitelisted
+        if (settings.whitelistedDomains.includes(domain)) {
+            showWhitelistSuccess(domain, true); // Already whitelisted
+            return;
+        }
+
+        settings.whitelistedDomains.push(domain);
+        try {
+            await chrome.storage.sync.set({ tabSuspenderSettings: settings });
+        } catch (storageError) {
+            console.error('[WHITELIST] Failed to save settings:', storageError);
+            showWhitelistError('Failed to save whitelist');
+            return;
+        }
+
+        // Notify background.js to reload config (for immediate effect on running timers)
+        try {
+            await safeSendMessage({ type: 'RELOAD_CONFIG' });
+            console.log('[WHITELIST] Notified background to reload config');
+        } catch (e) {
+            // Background might not be listening for this, that's okay - storage.onChanged will handle it
+            console.log('[WHITELIST] Background notification failed (using storage fallback):', e);
+        }
+
+        showWhitelistSuccess(domain, false);
+
+    } catch (error) {
+        console.error('[WHITELIST] Error whitelisting:', error);
+        showWhitelistError('Failed to whitelist');
+    }
+}
+
+// Show whitelist success feedback
+function showWhitelistSuccess(domain, alreadyWhitelisted) {
+    const message = alreadyWhitelisted ? 'Already protected' : `${domain} protected`;
+
+    whitelistBtn.innerHTML = `
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="20 6 9 17 4 12"></polyline>
         </svg>
+        ${alreadyWhitelisted ? 'Protected' : 'Added!'}
       `;
-            whitelistBtn.style.borderColor = '#22c55e';
-            whitelistBtn.style.color = '#22c55e';
+    whitelistBtn.style.borderColor = '#22c55e';
+    whitelistBtn.style.color = '#22c55e';
+    whitelistBtn.title = message;
 
-            setTimeout(() => {
-                whitelistBtn.innerHTML = `
+    setTimeout(() => {
+        whitelistBtn.innerHTML = `
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
           </svg>
+          Whitelist
         `;
-                whitelistBtn.style.borderColor = '';
-                whitelistBtn.style.color = '';
-            }, 2000);
-        }
-    } catch (error) {
-        console.error('Error whitelisting:', error);
-    }
+        whitelistBtn.style.borderColor = '';
+        whitelistBtn.style.color = '';
+        whitelistBtn.title = 'Whitelist current site';
+    }, 2000);
+}
+
+// Show whitelist error feedback
+function showWhitelistError(message) {
+    whitelistBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="15" y1="9" x2="9" y2="15"></line>
+          <line x1="9" y1="9" x2="15" y2="15"></line>
+        </svg>
+        Can't add
+      `;
+    whitelistBtn.style.borderColor = '#ef4444';
+    whitelistBtn.style.color = '#ef4444';
+    whitelistBtn.title = message;
+
+    setTimeout(() => {
+        whitelistBtn.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          Whitelist
+        `;
+        whitelistBtn.style.borderColor = '';
+        whitelistBtn.style.color = '';
+        whitelistBtn.title = 'Whitelist current site';
+    }, 2000);
 }
 
 // Handle Settings
@@ -810,7 +1125,7 @@ async function updateCountdownDisplay() {
         }
 
         // Get countdown for this tab
-        const countdown = await chrome.runtime.sendMessage({
+        const countdown = await safeSendMessage({
             type: 'GET_TAB_COUNTDOWN',
             tabId: activeTab.id
         });
@@ -1020,16 +1335,34 @@ function setupToastEventListeners() {
  * @returns {Object} Exclusion report
  */
 async function analyzeTabExclusions() {
-    // Get settings
-    const settingsResult = await chrome.storage.sync.get('tabSuspenderSettings');
+    console.log('[EXCLUSION] analyzeTabExclusions() called');
+
+    // Get settings with try-catch error handling
+    let settingsResult = {};
+    try {
+        settingsResult = await chrome.storage.sync.get('tabSuspenderSettings');
+    } catch (error) {
+        console.error('[EXCLUSION] Failed to load settings from storage:', error);
+        // Continue with empty settings - will use defaults
+    }
+    console.log('[EXCLUSION] Raw settings from storage:', settingsResult);
+
     const settings = settingsResult.tabSuspenderSettings || {
         suspensionTimeout: 30,
         autoUnsuspendOnFocus: true,
         suspendPinnedTabs: false,
-        whitelistedDomains: ['mail.google.com', 'calendar.google.com', 'docs.google.com'],
+        whitelistedDomains: [],  // FIXED: Empty default, not pre-populated
         neverSuspendAudio: true,
         neverSuspendActiveTab: true
     };
+
+    console.log('[EXCLUSION] Settings used:', {
+        whitelistedDomains: settings.whitelistedDomains,
+        whitelistCount: settings.whitelistedDomains?.length || 0,
+        suspendPinnedTabs: settings.suspendPinnedTabs,
+        neverSuspendAudio: settings.neverSuspendAudio,
+        neverSuspendActiveTab: settings.neverSuspendActiveTab
+    });
 
     // Get form status from storage
     let formStatus = {};
@@ -1041,8 +1374,17 @@ async function analyzeTabExclusions() {
         formStatus = formResult.tabFormStatus || {};
     }
 
-    // Query tabs in current window
-    const tabs = await chrome.tabs.query({ currentWindow: true });
+    // Query ALL tabs across ALL windows
+    const tabs = await chrome.tabs.query({});
+
+    console.log('[EXCLUSION] Tabs query returned:', tabs.length, 'tabs');
+    console.log('[EXCLUSION] First 3 tabs raw data:', tabs.slice(0, 3).map(t => ({
+        id: t.id,
+        url: t.url,
+        title: t.title?.substring(0, 30),
+        active: t.active,
+        windowId: t.windowId
+    })));
 
     // Initialize report
     const report = {
@@ -1064,6 +1406,17 @@ async function analyzeTabExclusions() {
     // Analyze each tab
     for (const tab of tabs) {
         const reason = getTabExclusionReason(tab, settings, formStatus);
+
+        // Debug: log each tab's exclusion reason
+        console.log('[EXCLUSION] Tab:', {
+            id: tab.id,
+            title: tab.title?.substring(0, 30),
+            url: tab.url?.substring(0, 50),
+            active: tab.active,
+            pinned: tab.pinned,
+            audible: tab.audible,
+            reason: reason || 'SUSPENDABLE'
+        });
 
         if (reason) {
             // Tab is excluded
@@ -1104,7 +1457,7 @@ function getTabExclusionReason(tab, settings, formStatus) {
     }
 
     // Active tab
-    if (tab.active && settings.neverSuspendActiveTab !== false) {
+    if (tab.active && settings.neverSuspendActiveTab === true) {
         return 'active';
     }
 
@@ -1119,7 +1472,7 @@ function getTabExclusionReason(tab, settings, formStatus) {
     }
 
     // Playing audio
-    if (tab.audible && settings.neverSuspendAudio !== false) {
+    if (tab.audible && settings.neverSuspendAudio === true) {
         return 'audio';
     }
 
@@ -1429,20 +1782,29 @@ setInterval(() => {
  */
 async function recordFocusSession(startTime, endTime) {
     try {
+        // Validate inputs
+        if (!startTime || !endTime) {
+            console.log('[FOCUS] Invalid timestamps, not recording. start:', startTime, 'end:', endTime);
+            return;
+        }
+
         const duration = endTime - startTime;
+        console.log('[FOCUS] Attempting to record session. Duration:', Math.round(duration / 1000), 'seconds');
 
         // Only record if session was at least 10 seconds
         if (duration < 10000) {
-            console.log('[FOCUS] Session too short, not recording:', duration, 'ms');
+            console.log('[FOCUS] Session too short (< 10 seconds), not recording:', duration, 'ms');
             return;
         }
 
         const result = await chrome.storage.local.get('focusSessions');
         const sessions = result.focusSessions || [];
+        const sessionsBefore = sessions.length;
 
         sessions.push({
             timestamp: startTime,
-            duration: duration
+            duration: duration,
+            recordedAt: Date.now() // Track when it was recorded
         });
 
         // Keep last 100 sessions
@@ -1451,21 +1813,55 @@ async function recordFocusSession(startTime, endTime) {
         }
 
         await chrome.storage.local.set({ focusSessions: sessions });
-        console.log('[FOCUS] Session recorded:', Math.round(duration / 1000), 'seconds');
+        console.log('[FOCUS] ✅ Session recorded successfully!',
+            Math.round(duration / 1000), 'seconds.',
+            'Total sessions:', sessions.length, '(was:', sessionsBefore, ')');
     } catch (error) {
-        console.error('[FOCUS] Failed to record session:', error);
+        console.error('[FOCUS] ❌ Failed to record session:', error);
     }
 }
 
 // Load Focus Mode data
 async function loadFocusModeData() {
     try {
-        const result = await chrome.storage.local.get(['focusModeTrials', 'isPro']);
+        const result = await chrome.storage.local.get([
+            'focusModeTrials',
+            'isPro',
+            'focusModeActive',
+            'focusModeStartTime',
+            'focusModeSuspendedTabs'
+        ]);
         isPro = result.isPro || false;
         focusModeTrialsLeft = isPro ? -1 : (result.focusModeTrials !== undefined ? result.focusModeTrials : 3);
-        updateFocusModeButton();
+
+        console.log('[FOCUS] Loading state from storage:', {
+            active: result.focusModeActive,
+            startTime: result.focusModeStartTime,
+            suspendedTabs: result.focusModeSuspendedTabs?.length || 0
+        });
+
+        // Restore Focus Mode state if it was active
+        if (result.focusModeActive) {
+            isFocusModeActive = true;
+            // Ensure startTime is properly restored (use stored value or current time as fallback)
+            focusModeStartTime = result.focusModeStartTime || Date.now();
+            focusModeSuspendedTabs = result.focusModeSuspendedTabs || [];
+
+            console.log('[FOCUS] Focus Mode is active, restored startTime:', focusModeStartTime,
+                'Duration so far:', Math.round((Date.now() - focusModeStartTime) / 1000), 'seconds');
+
+            // Get current active tab for display
+            const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            const tabTitle = activeTab ? activeTab.title : 'Current Tab';
+
+            // Show Focus Mode active UI
+            showFocusModeActive(focusModeSuspendedTabs.length, tabTitle);
+        } else {
+            updateFocusModeButton();
+        }
     } catch (error) {
-        console.error('Error loading Focus Mode data:', error);
+        console.error('[FOCUS] Error loading Focus Mode data:', error);
+        updateFocusModeButton();
     }
 }
 
@@ -1480,18 +1876,31 @@ function setupFocusModeListeners() {
     }
 }
 
-// Update Focus Mode button text
+// Update Focus Mode button text and UI state
 function updateFocusModeButton() {
     if (!focusModeBtnText) return;
 
     if (isPro) {
+        // Pro user - full access
         focusModeBtnText.textContent = 'Activate Focus Mode';
+
+        // Hide lock icon and pro badge
+        if (focusLockIcon) focusLockIcon.style.display = 'none';
+        if (focusProBadge) focusProBadge.style.display = 'none';
+        if (focusProof) focusProof.style.display = 'none';
     } else {
+        // Free user
         if (focusModeTrialsLeft > 0) {
             focusModeBtnText.textContent = `Try Free (${focusModeTrialsLeft} left)`;
+            if (focusLockIcon) focusLockIcon.style.display = 'none';
         } else {
-            focusModeBtnText.textContent = 'Upgrade to Pro';
+            focusModeBtnText.textContent = 'Unlock Focus Mode';
+            if (focusLockIcon) focusLockIcon.style.display = 'inline';
         }
+
+        // Show pro badge and social proof for non-pro users
+        if (focusProBadge) focusProBadge.style.display = 'inline-flex';
+        if (focusProof) focusProof.style.display = 'flex';
     }
 }
 
@@ -1512,13 +1921,23 @@ async function handleFocusModeActivate() {
             return;
         }
 
+        // Get settings including whitelist
+        const settingsResult = await chrome.storage.sync.get('tabSuspenderSettings');
+        const settings = settingsResult.tabSuspenderSettings || {};
+        const whitelistedDomains = settings.whitelistedDomains || [];
+        const neverSuspendPinned = settings.suspendPinnedTabs === false;
+        const neverSuspendAudio = settings.neverSuspendAudio !== false;
+
         // Get all other tabs
         const allTabs = await chrome.tabs.query({});
         const tabsToSuspend = allTabs.filter(tab =>
             tab.id !== activeTab.id &&
             tab.url &&
             !isInternalUrl(tab.url) &&
-            !tab.url.includes('suspended.html')
+            !tab.url.includes('suspended.html') &&
+            !isUrlWhitelisted(tab.url, whitelistedDomains) &&
+            !(neverSuspendPinned && tab.pinned) &&
+            !(neverSuspendAudio && tab.audible)
         );
 
         // Check if there are any tabs to suspend (don't waste a trial)
@@ -1527,10 +1946,29 @@ async function handleFocusModeActivate() {
             return;
         }
 
-        // Suspend all other tabs
+        // Suspend all other tabs and track them for restoration
+        focusModeSuspendedTabs = [];
         for (const tab of tabsToSuspend) {
-            await suspendTabDirect(tab.id, tab.url, tab.title, tab.favIconUrl);
+            const success = await suspendTabDirect(tab.id, tab.url, tab.title, tab.favIconUrl);
+            if (success) {
+                // Store original URL for restoration
+                focusModeSuspendedTabs.push({
+                    id: tab.id,
+                    originalUrl: tab.url,
+                    title: tab.title
+                });
+            }
         }
+
+        // Record session start time BEFORE saving to storage
+        focusModeStartTime = Date.now();
+
+        // Persist Focus Mode state to storage
+        await chrome.storage.local.set({
+            focusModeActive: true,
+            focusModeStartTime: focusModeStartTime,
+            focusModeSuspendedTabs: focusModeSuspendedTabs
+        });
 
         // Decrement trial count if not Pro (only after successful suspension)
         if (!isPro && focusModeTrialsLeft > 0) {
@@ -1539,9 +1977,6 @@ async function handleFocusModeActivate() {
             updateFocusModeButton();
         }
 
-        // Record session start time
-        focusModeStartTime = Date.now();
-
         // Show active state
         showFocusModeActive(tabsToSuspend.length, activeTab.title);
         isFocusModeActive = true;
@@ -1549,7 +1984,7 @@ async function handleFocusModeActivate() {
         // Refresh stats
         await loadStats();
     } catch (error) {
-        console.error('Error activating Focus Mode:', error);
+        console.error('[FOCUS] Error activating Focus Mode:', error);
         alert('Error activating Focus Mode: ' + error.message);
     }
 }
@@ -1587,12 +2022,12 @@ function showFocusModeTrialMessage() {
 
     focusModeActive.appendChild(message);
 
-    // Attach click handler to show email capture modal
+    // Attach click handler to show license activation modal
     const upgradeLink = document.getElementById('trialUpgradeLink');
     if (upgradeLink) {
         upgradeLink.addEventListener('click', (e) => {
             e.preventDefault();
-            showEmailCaptureModal('Focus Mode');
+            showLicenseModal();
         });
     }
 }
@@ -1600,27 +2035,73 @@ function showFocusModeTrialMessage() {
 // Handle Focus Mode exit
 async function handleFocusModeExit() {
     try {
+        const endTime = Date.now();
+        console.log('[FOCUS] Exit clicked. startTime:', focusModeStartTime, 'endTime:', endTime);
+
         // Record Focus Mode session if we have a start time
         if (focusModeStartTime) {
-            await recordFocusSession(focusModeStartTime, Date.now());
-            focusModeStartTime = null;
+            const duration = endTime - focusModeStartTime;
+            console.log('[FOCUS] Recording session:', {
+                startTime: new Date(focusModeStartTime).toISOString(),
+                endTime: new Date(endTime).toISOString(),
+                durationSeconds: Math.round(duration / 1000)
+            });
+            await recordFocusSession(focusModeStartTime, endTime);
+        } else {
+            // Try to get start time from storage as fallback
+            const stored = await chrome.storage.local.get('focusModeStartTime');
+            if (stored.focusModeStartTime) {
+                console.log('[FOCUS] Using stored startTime as fallback:', stored.focusModeStartTime);
+                await recordFocusSession(stored.focusModeStartTime, endTime);
+            } else {
+                console.log('[FOCUS] No start time available, cannot record session');
+            }
         }
+        focusModeStartTime = null;
+
+        // Restore tabs that were suspended by Focus Mode
+        if (focusModeSuspendedTabs && focusModeSuspendedTabs.length > 0) {
+            console.log('[FOCUS] Restoring', focusModeSuspendedTabs.length, 'suspended tabs');
+            for (const tabInfo of focusModeSuspendedTabs) {
+                try {
+                    // Check if tab still exists
+                    const tab = await chrome.tabs.get(tabInfo.id);
+                    if (tab && tab.url && tab.url.includes('suspended.html')) {
+                        await restoreTabDirect(tabInfo.id, tab.url);
+                    }
+                } catch (e) {
+                    // Tab no longer exists, skip
+                    console.log('[FOCUS] Tab', tabInfo.id, 'no longer exists, skipping');
+                }
+            }
+            focusModeSuspendedTabs = [];
+        }
+
+        // Clear Focus Mode state from storage
+        await chrome.storage.local.set({
+            focusModeActive: false,
+            focusModeStartTime: null,
+            focusModeSuspendedTabs: []
+        });
 
         if (focusModeBtn) focusModeBtn.style.display = 'block';
         if (focusModeActive) focusModeActive.style.display = 'none';
 
         isFocusModeActive = false;
 
-        // Reload tabs display
+        // Reload tabs display and stats
+        await loadStats();
         await loadTabs();
+
+        console.log('[FOCUS] Exit complete, UI reset');
     } catch (error) {
-        console.error('Error exiting Focus Mode:', error);
+        console.error('[FOCUS] Error exiting Focus Mode:', error);
     }
 }
 
-// Show email capture modal when trials exhausted
+// Show license modal when trials exhausted
 function showFocusModeUpgrade() {
-    showEmailCaptureModal('Focus Mode');
+    showLicenseModal();
 }
 
 /**

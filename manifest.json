@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Tab Suspender Pro: Save Memory & Speed Up Chrome | Zovo",
+  "name": "Tab Suspender Pro - Save Memory & Speed Up Chrome",
   "version": "1.0.18",
   "description": "The trusted tab suspender that saves memory and speeds up Chrome. Unlimited free. No limits. No tracking.",
+  "minimum_chrome_version": "88",
   "action": {
     "default_title": "Tab Suspender Pro",
     "default_popup": "popup.html",
