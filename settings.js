@@ -65,11 +65,9 @@ const toastMessage = document.getElementById('toastMessage');
 
 // State
 let settings = {};
-let isPro = false;
 let currentProfile = 'balanced';
 
-// Pro tier limits
-const MAX_FREE_WHITELIST = 5;
+// Community Edition - all features unlocked
 
 // Profile configurations
 const PROFILES = {
@@ -87,26 +85,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateUI();
 });
 
-// Check Pro status
+// Community Edition - all features enabled
 async function checkProStatus() {
-    try {
-        const result = await chrome.storage.local.get(['isPro', 'licenseKey']);
-        isPro = result.isPro || false;
-
-        if (isPro && result.licenseKey) {
-            // Show active license (with null checks)
-            if (licensePrompt) licensePrompt.style.display = 'none';
-            if (licenseActive) licenseActive.style.display = 'flex';
-            if (licenseKeyDisplay) licenseKeyDisplay.textContent = maskLicenseKey(result.licenseKey);
-
-            // Show custom timing slider (with null checks)
-            if (unlockCustomTimingBtn) unlockCustomTimingBtn.style.display = 'none';
-            if (customTimingSlider) customTimingSlider.style.display = 'flex';
-        }
-    } catch (error) {
-        console.error('Error checking Pro status:', error);
-        isPro = false;
-    }
+    // Community Edition: All features unlocked by default
+    if (unlockCustomTimingBtn) unlockCustomTimingBtn.style.display = 'none';
+    if (customTimingSlider) customTimingSlider.style.display = 'flex';
+    if (licensePrompt) licensePrompt.style.display = 'none';
+    if (licenseSection) licenseSection.style.display = 'none';
 }
 
 // Load settings
@@ -243,10 +228,7 @@ function setupEventListeners() {
         debouncedSave();
     });
 
-    // Unlock custom timing button
-    unlockCustomTimingBtn?.addEventListener('click', () => {
-        openLicenseModal();
-    });
+    // Community Edition - custom timing always available
 
     // Customize protection toggle
     customizeProtectionBtn?.addEventListener('click', () => {
@@ -281,17 +263,6 @@ function setupEventListeners() {
     exportBtn?.addEventListener('click', exportSettings);
     importBtn?.addEventListener('click', () => importFile.click());
     importFile?.addEventListener('change', importSettings);
-
-    // License modal
-    activateLicenseBtn?.addEventListener('click', openLicenseModal);
-    licenseModalClose?.addEventListener('click', closeLicenseModal);
-    licenseModal?.addEventListener('click', (e) => {
-        if (e.target === licenseModal) closeLicenseModal();
-    });
-    activateBtn?.addEventListener('click', activateLicense);
-
-    // License input formatting
-    licenseInput?.addEventListener('input', formatLicenseInput);
 }
 
 // Add current site to whitelist
@@ -344,13 +315,7 @@ async function addDomain(domain) {
         return;
     }
 
-    // Check whitelist limit for free users
-    const currentCount = settings.whitelistedDomains?.length || 0;
-    if (!isPro && currentCount >= MAX_FREE_WHITELIST) {
-        showWhitelistLimitModal();
-        return;
-    }
-
+    // Community Edition - no whitelist limits
     try {
         await chrome.runtime.sendMessage({ type: 'WHITELIST_DOMAIN', domain });
         settings.whitelistedDomains = settings.whitelistedDomains || [];
@@ -411,83 +376,22 @@ function renderWhitelist() {
     });
 }
 
-// Update whitelist header with counter
+// Update whitelist header with counter - Community Edition (unlimited)
 function updateWhitelistHeader(count) {
-    // Find or create the whitelist counter element
     const section = document.querySelector('.section:has(#whitelistItems)');
     if (!section) return;
 
     let counterEl = section.querySelector('.whitelist-counter');
-
-    if (!isPro) {
-        const remaining = MAX_FREE_WHITELIST - count;
-        const isAtLimit = count >= MAX_FREE_WHITELIST;
-        const isNearLimit = count >= MAX_FREE_WHITELIST - 1;
-
-        if (!counterEl) {
-            counterEl = document.createElement('div');
-            counterEl.className = 'whitelist-counter';
-            const header = section.querySelector('.section-header');
-            if (header) {
-                header.appendChild(counterEl);
-            }
+    if (!counterEl) {
+        counterEl = document.createElement('div');
+        counterEl.className = 'whitelist-counter';
+        const header = section.querySelector('.section-header');
+        if (header) {
+            header.appendChild(counterEl);
         }
-
-        counterEl.innerHTML = `
-            <span class="counter-text ${isAtLimit ? 'at-limit' : isNearLimit ? 'near-limit' : ''}">${count}/${MAX_FREE_WHITELIST}</span>
-            ${isAtLimit ? '<button class="btn-unlock-whitelist" id="unlockWhitelistBtn">Unlock Unlimited</button>' : ''}
-        `;
-
-        // Add click handler for unlock button
-        const unlockBtn = counterEl.querySelector('#unlockWhitelistBtn');
-        if (unlockBtn) {
-            unlockBtn.addEventListener('click', openLicenseModal);
-        }
-    } else if (counterEl) {
-        // Pro user - show unlimited badge
-        counterEl.innerHTML = '<span class="counter-text pro">Unlimited ✓</span>';
     }
-}
-
-// Show whitelist limit modal
-function showWhitelistLimitModal() {
-    // Create modal if it doesn't exist
-    let modal = document.getElementById('whitelistLimitModal');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'whitelistLimitModal';
-        modal.className = 'modal-overlay';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <button class="modal-close" id="whitelistLimitModalClose">×</button>
-                <div class="modal-icon">🔒</div>
-                <h2 class="modal-title">Whitelist Limit Reached</h2>
-                <p class="modal-desc">Free users can whitelist up to ${MAX_FREE_WHITELIST} sites. Upgrade to Pro for <strong>unlimited whitelists</strong> and more!</p>
-                <div class="limit-benefits">
-                    <div class="benefit-item">✓ Unlimited whitelisted sites</div>
-                    <div class="benefit-item">✓ Custom suspension timing</div>
-                    <div class="benefit-item">✓ Priority support</div>
-                </div>
-                <button id="upgradeFromWhitelistBtn" class="btn-primary">Unlock Pro Features</button>
-                <p class="modal-hint">Or remove a site to add a new one</p>
-            </div>
-        `;
-        document.body.appendChild(modal);
-
-        // Add event listeners
-        modal.querySelector('#whitelistLimitModalClose').addEventListener('click', () => {
-            modal.style.display = 'none';
-        });
-        modal.querySelector('#upgradeFromWhitelistBtn').addEventListener('click', () => {
-            modal.style.display = 'none';
-            openLicenseModal();
-        });
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) modal.style.display = 'none';
-        });
-    }
-
-    modal.style.display = 'flex';
+    // Community Edition - show total count only
+    counterEl.innerHTML = `<span class="counter-text pro">${count} sites</span>`;
 }
 
 // Debounced save
@@ -501,7 +405,7 @@ function debouncedSave() {
 async function saveSettings() {
     try {
         const newSettings = {
-            suspensionTimeout: isPro ? parseInt(timeoutSlider?.value || 30) : PROFILES[currentProfile].timeout,
+            suspensionTimeout: parseInt(timeoutSlider?.value || 30) || PROFILES[currentProfile].timeout,
             autoUnsuspendOnFocus: autoRestore?.checked ?? true,
             neverSuspendAudio: neverAudio?.checked ?? true,
             neverSuspendUnsavedForms: neverForms?.checked ?? true,
@@ -590,130 +494,7 @@ function validateImportedSettings(imported) {
     return valid;
 }
 
-// License modal functions
-function openLicenseModal() {
-    if (licenseModal) licenseModal.style.display = 'flex';
-    if (licenseInput) {
-        licenseInput.value = '';
-        licenseInput.focus();
-    }
-    if (licenseStatus) {
-        licenseStatus.textContent = '';
-        licenseStatus.className = 'license-status';
-    }
-}
-
-function closeLicenseModal() {
-    if (licenseModal) licenseModal.style.display = 'none';
-}
-
-function formatLicenseInput(e) {
-    let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-
-    // Format as ZOVO-XXXX-XXXX-XXXX-XXXX
-    const parts = [];
-    if (value.length > 0) parts.push(value.slice(0, 4));
-    if (value.length > 4) parts.push(value.slice(4, 8));
-    if (value.length > 8) parts.push(value.slice(8, 12));
-    if (value.length > 12) parts.push(value.slice(12, 16));
-    if (value.length > 16) parts.push(value.slice(16, 20));
-
-    e.target.value = parts.join('-');
-}
-
-async function activateLicense() {
-    const key = licenseInput?.value?.trim() || '';
-
-    if (!key || key.length < 24) {
-        if (licenseStatus) {
-            licenseStatus.textContent = 'Please enter a valid license key';
-            licenseStatus.className = 'license-status error';
-        }
-        return;
-    }
-
-    if (activateBtn) activateBtn.disabled = true;
-    if (licenseStatus) {
-        licenseStatus.textContent = 'Verifying...';
-        licenseStatus.className = 'license-status';
-    }
-
-    try {
-        // Try to verify with backend (use same endpoint as background.js)
-        const response = await fetch('https://xggdjlurppfcytxqoozs.supabase.co/functions/v1/verify-extension-license', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ license_key: key, extension: 'tab_suspender_pro' })
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            if (data.valid) {
-                await chrome.storage.local.set({ isPro: true, licenseKey: key });
-                isPro = true;
-
-                if (licenseStatus) {
-                    licenseStatus.textContent = 'License activated successfully!';
-                    licenseStatus.className = 'license-status success';
-                }
-
-                // Update UI (with null checks)
-                if (licensePrompt) licensePrompt.style.display = 'none';
-                if (licenseActive) licenseActive.style.display = 'flex';
-                if (licenseKeyDisplay) licenseKeyDisplay.textContent = maskLicenseKey(key);
-                if (unlockCustomTimingBtn) unlockCustomTimingBtn.style.display = 'none';
-                if (customTimingSlider) customTimingSlider.style.display = 'flex';
-
-                showToast('Pro features unlocked!', 'success');
-
-                setTimeout(closeLicenseModal, 1500);
-            } else {
-                if (licenseStatus) {
-                    licenseStatus.textContent = data.message || 'Invalid license key';
-                    licenseStatus.className = 'license-status error';
-                }
-            }
-        } else {
-            throw new Error('Server error');
-        }
-    } catch (error) {
-        // Offline fallback - accept keys starting with ZOVO-
-        if (key.startsWith('ZOVO-') && key.length === 24) {
-            await chrome.storage.local.set({ isPro: true, licenseKey: key });
-            isPro = true;
-
-            if (licenseStatus) {
-                licenseStatus.textContent = 'License activated (offline mode)';
-                licenseStatus.className = 'license-status success';
-            }
-
-            // Update UI (with null checks)
-            if (licensePrompt) licensePrompt.style.display = 'none';
-            if (licenseActive) licenseActive.style.display = 'flex';
-            if (licenseKeyDisplay) licenseKeyDisplay.textContent = maskLicenseKey(key);
-            if (unlockCustomTimingBtn) unlockCustomTimingBtn.style.display = 'none';
-            if (customTimingSlider) customTimingSlider.style.display = 'flex';
-
-            showToast('Pro features unlocked!', 'success');
-
-            setTimeout(closeLicenseModal, 1500);
-        } else {
-            if (licenseStatus) {
-                licenseStatus.textContent = 'Could not verify license. Check your connection.';
-                licenseStatus.className = 'license-status error';
-            }
-        }
-    }
-
-    if (activateBtn) activateBtn.disabled = false;
-}
-
 // Helper functions
-function maskLicenseKey(key) {
-    if (!key || key.length < 8) return key;
-    return key.slice(0, 4) + '-****-****-****';
-}
-
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;

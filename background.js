@@ -75,7 +75,6 @@ let config = { ...DEFAULT_CONFIG };
 // Note: Using chrome.alarms API instead of setTimeout for MV3 service worker persistence
 // Tab activity times are stored in chrome.storage.session for persistence across SW restarts
 const ALARM_PREFIX = 'suspend-tab-';
-const LICENSE_CHECK_ALARM = 'license-recheck';
 
 // Track tabs with unsaved form data (persisted in storage for SW restarts)
 // Key: tabId, Value: boolean
@@ -607,13 +606,6 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     // Check extension context is valid before processing alarms
     if (!isExtensionContextValid()) {
         console.warn('[BG][TIMER] Extension context invalid, skipping alarm processing');
-        return;
-    }
-
-    // Handle license check alarm
-    if (alarm.name === LICENSE_CHECK_ALARM) {
-        console.log('[BG][LICENSE] Background license check triggered');
-        await backgroundLicenseCheck();
         return;
     }
 
@@ -1455,96 +1447,6 @@ async function updateBadge() {
 }
 
 // ============================================================================
-// LICENSE VERIFICATION (Background)
-// ============================================================================
-
-const LICENSE_VERIFY_API = 'https://xggdjlurppfcytxqoozs.supabase.co/functions/v1/verify-extension-license';
-const LICENSE_CHECK_INTERVAL_HOURS = 24;
-// Note: LICENSE_CHECK_ALARM is defined at top of file with ALARM_PREFIX
-
-// Set up periodic license verification alarm
-async function setupLicenseVerification() {
-    if (!isExtensionContextValid()) {
-        console.warn('[BG][LICENSE] Extension context invalid, skipping license verification setup');
-        return;
-    }
-    try {
-        // Create alarm to check license every 24 hours
-        await chrome.alarms.create(LICENSE_CHECK_ALARM, {
-            periodInMinutes: LICENSE_CHECK_INTERVAL_HOURS * 60
-        });
-        console.log('[BG][LICENSE] Background verification alarm set for every', LICENSE_CHECK_INTERVAL_HOURS, 'hours');
-    } catch (error) {
-        // Check for context invalidation errors
-        if (error.message && (error.message.includes('Extension context invalidated') ||
-            error.message.includes('No SW'))) {
-            console.warn('[BG][LICENSE] Context invalidated during setup');
-            return;
-        }
-        console.error('[BG][LICENSE] Failed to setup verification:', error);
-    }
-}
-
-// License alarm is handled by the main alarms listener above (around line 342)
-// which checks for LICENSE_CHECK_ALARM and calls backgroundLicenseCheck()
-
-// Background license verification
-async function backgroundLicenseCheck() {
-    if (!isExtensionContextValid()) {
-        console.warn('[BG][LICENSE] Extension context invalid, skipping background check');
-        return;
-    }
-    try {
-        const data = await chrome.storage.local.get(['licenseKey', 'isPro', 'verifiedAt']);
-
-        if (!data.isPro || !data.licenseKey) {
-            console.log('[BG][LICENSE] No Pro license to verify');
-            return;
-        }
-
-        // Verify with server
-        const response = await fetch(LICENSE_VERIFY_API, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                license_key: data.licenseKey,
-                extension: 'tab_suspender_pro'
-            }),
-            signal: AbortSignal.timeout(15000)
-        });
-
-        if (!response.ok) {
-            console.log('[BG][LICENSE] Background check failed - server error');
-            return; // Don't revoke on server errors, wait for next check
-        }
-
-        const result = await response.json();
-
-        if (result.valid) {
-            // Update verification timestamp
-            await chrome.storage.local.set({
-                verifiedAt: Date.now(),
-                serverSignature: result.signature || data.serverSignature
-            });
-            console.log('[BG][LICENSE] Background verification successful');
-        } else {
-            // License is no longer valid - revoke Pro status
-            console.log('[BG][LICENSE] Background verification FAILED - revoking Pro status');
-            await chrome.storage.local.set({
-                isPro: false,
-                serverSignature: null
-            });
-
-            // Notify user via badge
-            await chrome.action.setBadgeText({ text: '!' });
-            await chrome.action.setBadgeBackgroundColor({ color: '#EF4444' });
-        }
-    } catch (error) {
-        console.error('[BG][LICENSE] Background check error:', error);
-        // Don't revoke on network errors - wait for next check
-    }
-}
-
 // ============================================================================
 // STARTUP
 // ============================================================================
@@ -1579,7 +1481,6 @@ async function backgroundLicenseCheck() {
             return;
         }
 
-        await setupLicenseVerification();
         console.log('[BG] Background initialized successfully');
     } catch (error) {
         // Check for context invalidation errors

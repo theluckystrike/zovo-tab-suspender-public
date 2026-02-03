@@ -31,10 +31,7 @@ const tabsExpanded = document.getElementById('tabsExpanded');
 const tabsSummaryText = document.getElementById('tabsSummaryText');
 const tabsChevron = document.getElementById('tabsChevron');
 
-// DOM Elements - License Modal
-const licenseModal = document.getElementById('licenseModal');
-const activateLicenseLink = document.getElementById('activateLicenseLink');
-const licenseModalClose = document.getElementById('licenseModalClose');
+// Community Edition - License modal elements removed
 
 let currentFilter = 'all';
 let tabsData = [];
@@ -52,16 +49,10 @@ const windowCount = document.getElementById('windowCount');
 // const memoryChange = document.getElementById('memoryChange');
 // const heroMessage = document.getElementById('heroMessage');
 
-let focusModeTrialsLeft = 3;
+// Community Edition - Focus Mode fully unlocked
 let isFocusModeActive = false;
-let isPro = false;
 let focusModeStartTime = null; // Track when Focus Mode was activated
 let focusModeSuspendedTabs = []; // Track tabs suspended by Focus Mode for restoration
-
-// Paywall Email Capture
-const PAYWALL_API = 'https://xggdjlurppfcytxqoozs.supabase.co/functions/v1/log-paywall-hit';
-let currentFeatureAttempted = '';
-let savedUserEmail = '';
 
 // Operation locks to prevent race conditions
 let isOperationInProgress = false;
@@ -122,15 +113,12 @@ let toastState = {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('Popup loaded');
-    initLicenseSystem(); // Check license first
-    await loadSavedEmail(); // Load saved email for prefilling
+    console.log('Popup loaded - Community Edition');
     await loadFocusModeData();
     await loadStats();
     await loadTabs();
     setupEventListeners();
     setupFocusModeListeners();
-    setupEmailModalListeners();
 
     // ========== AGENT 1: COUNTDOWN INDICATOR INIT ==========
     await initCountdownIndicator();
@@ -152,26 +140,6 @@ function setupEventListeners() {
     // Tab list toggle
     if (tabsToggle) {
         tabsToggle.addEventListener('click', toggleTabsList);
-    }
-
-    // License modal handlers
-    if (activateLicenseLink) {
-        activateLicenseLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            showLicenseModal();
-        });
-    }
-
-    if (licenseModalClose) {
-        licenseModalClose.addEventListener('click', hideLicenseModal);
-    }
-
-    if (licenseModal) {
-        licenseModal.addEventListener('click', (e) => {
-            if (e.target === licenseModal) {
-                hideLicenseModal();
-            }
-        });
     }
 
     // Initialize tab list state from storage
@@ -216,23 +184,7 @@ async function initTabListState() {
     }
 }
 
-// Show license activation modal
-function showLicenseModal() {
-    if (licenseModal) {
-        licenseModal.style.display = 'flex';
-        const input = document.getElementById('licenseInput');
-        if (input) input.focus();
-    }
-}
-
-// Hide license activation modal
-function hideLicenseModal() {
-    if (licenseModal) {
-        licenseModal.style.display = 'none';
-        const status = document.getElementById('licenseStatus');
-        if (status) status.style.display = 'none';
-    }
-}
+// Community Edition - License functions removed
 
 // Load Statistics - direct from storage as fallback
 async function loadStats() {
@@ -1821,18 +1773,14 @@ async function recordFocusSession(startTime, endTime) {
     }
 }
 
-// Load Focus Mode data
+// Load Focus Mode data - Community Edition (unlimited Focus Mode)
 async function loadFocusModeData() {
     try {
         const result = await chrome.storage.local.get([
-            'focusModeTrials',
-            'isPro',
             'focusModeActive',
             'focusModeStartTime',
             'focusModeSuspendedTabs'
         ]);
-        isPro = result.isPro || false;
-        focusModeTrialsLeft = isPro ? -1 : (result.focusModeTrials !== undefined ? result.focusModeTrials : 3);
 
         console.log('[FOCUS] Loading state from storage:', {
             active: result.focusModeActive,
@@ -1843,7 +1791,6 @@ async function loadFocusModeData() {
         // Restore Focus Mode state if it was active
         if (result.focusModeActive) {
             isFocusModeActive = true;
-            // Ensure startTime is properly restored (use stored value or current time as fallback)
             focusModeStartTime = result.focusModeStartTime || Date.now();
             focusModeSuspendedTabs = result.focusModeSuspendedTabs || [];
 
@@ -1876,43 +1823,22 @@ function setupFocusModeListeners() {
     }
 }
 
-// Update Focus Mode button text and UI state
+// Update Focus Mode button text and UI state - Community Edition (always unlocked)
 function updateFocusModeButton() {
     if (!focusModeBtnText) return;
 
-    if (isPro) {
-        // Pro user - full access
-        focusModeBtnText.textContent = 'Activate Focus Mode';
+    // Community Edition - Focus Mode fully unlocked
+    focusModeBtnText.textContent = 'Activate Focus Mode';
 
-        // Hide lock icon and pro badge
-        if (focusLockIcon) focusLockIcon.style.display = 'none';
-        if (focusProBadge) focusProBadge.style.display = 'none';
-        if (focusProof) focusProof.style.display = 'none';
-    } else {
-        // Free user
-        if (focusModeTrialsLeft > 0) {
-            focusModeBtnText.textContent = `Try Free (${focusModeTrialsLeft} left)`;
-            if (focusLockIcon) focusLockIcon.style.display = 'none';
-        } else {
-            focusModeBtnText.textContent = 'Unlock Focus Mode';
-            if (focusLockIcon) focusLockIcon.style.display = 'inline';
-        }
-
-        // Show pro badge and social proof for non-pro users
-        if (focusProBadge) focusProBadge.style.display = 'inline-flex';
-        if (focusProof) focusProof.style.display = 'flex';
-    }
+    // Hide lock icon and pro badge
+    if (focusLockIcon) focusLockIcon.style.display = 'none';
+    if (focusProBadge) focusProBadge.style.display = 'none';
+    if (focusProof) focusProof.style.display = 'none';
 }
 
-// Handle Focus Mode activation
+// Handle Focus Mode activation - Community Edition (unlimited)
 async function handleFocusModeActivate() {
     try {
-        // Check if user has trials left or is Pro
-        if (!isPro && focusModeTrialsLeft <= 0) {
-            showFocusModeUpgrade();
-            return;
-        }
-
         // Get current active tab
         const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
@@ -1940,7 +1866,7 @@ async function handleFocusModeActivate() {
             !(neverSuspendAudio && tab.audible)
         );
 
-        // Check if there are any tabs to suspend (don't waste a trial)
+        // Check if there are any tabs to suspend
         if (tabsToSuspend.length === 0) {
             alert('No other tabs to suspend. Focus Mode works best when you have multiple tabs open.');
             return;
@@ -1970,13 +1896,6 @@ async function handleFocusModeActivate() {
             focusModeSuspendedTabs: focusModeSuspendedTabs
         });
 
-        // Decrement trial count if not Pro (only after successful suspension)
-        if (!isPro && focusModeTrialsLeft > 0) {
-            focusModeTrialsLeft--;
-            await chrome.storage.local.set({ focusModeTrials: focusModeTrialsLeft });
-            updateFocusModeButton();
-        }
-
         // Show active state
         showFocusModeActive(tabsToSuspend.length, activeTab.title);
         isFocusModeActive = true;
@@ -1989,7 +1908,7 @@ async function handleFocusModeActivate() {
     }
 }
 
-// Show Focus Mode active state
+// Show Focus Mode active state - Community Edition
 function showFocusModeActive(suspendedCount, currentTabTitle) {
     if (focusModeBtn) focusModeBtn.style.display = 'none';
     if (focusModeActive) focusModeActive.style.display = 'block';
@@ -2004,33 +1923,9 @@ function showFocusModeActive(suspendedCount, currentTabTitle) {
             : currentTabTitle;
         focusCurrentTab.textContent = `Focusing on: ${truncatedTitle}`;
     }
-
-    // Show trial message if this was the last free trial
-    if (!isPro && focusModeTrialsLeft === 0) {
-        showFocusModeTrialMessage();
-    }
 }
 
-// Show trial exhausted message
-function showFocusModeTrialMessage() {
-    if (!focusModeActive) return;
-
-    const message = document.createElement('div');
-    message.className = 'focus-trial-message';
-    message.style.cssText = 'margin-top: 12px; padding: 8px; background: rgba(245, 158, 11, 0.1); border: 1px solid #F59E0B; border-radius: 6px; font-size: 11px; text-align: center; color: #F59E0B;';
-    message.innerHTML = '💡 <strong>Loved Focus Mode?</strong> <a href="#" id="trialUpgradeLink" style="color: #F59E0B; text-decoration: underline;">Unlock unlimited</a> for $4.99/mo';
-
-    focusModeActive.appendChild(message);
-
-    // Attach click handler to show license activation modal
-    const upgradeLink = document.getElementById('trialUpgradeLink');
-    if (upgradeLink) {
-        upgradeLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            showLicenseModal();
-        });
-    }
-}
+// Community Edition - Trial message removed (unlimited Focus Mode)
 
 // Handle Focus Mode exit
 async function handleFocusModeExit() {
@@ -2099,533 +1994,9 @@ async function handleFocusModeExit() {
     }
 }
 
-// Show license modal when trials exhausted
-function showFocusModeUpgrade() {
-    showLicenseModal();
-}
+// Community Edition - Upgrade function removed
 
-/**
- * Email Capture Modal System
- */
+// Community Edition - Email capture and paywall systems removed
 
-// Load saved email from storage
-async function loadSavedEmail() {
-    try {
-        const result = await chrome.storage.local.get(['userEmail']);
-        savedUserEmail = result.userEmail || '';
-        console.log('[EMAIL] Loaded saved email:', savedUserEmail ? 'found' : 'none');
-    } catch (error) {
-        console.error('[EMAIL] Error loading saved email:', error);
-    }
-}
-
-// Show the email capture modal
-function showEmailCaptureModal(featureName) {
-    currentFeatureAttempted = featureName.toLowerCase().replace(/\s+/g, '_');
-
-    const modal = document.getElementById('emailCaptureModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const emailInput = document.getElementById('emailInput');
-    const emailError = document.getElementById('emailError');
-    const continueBtn = document.getElementById('modalContinueBtn');
-
-    if (!modal) return;
-
-    // Set title
-    modalTitle.textContent = `Unlock ${featureName}`;
-
-    // Prefill email if saved
-    if (savedUserEmail) {
-        emailInput.value = savedUserEmail;
-    } else {
-        emailInput.value = '';
-    }
-
-    // Reset state
-    emailError.style.display = 'none';
-    emailInput.classList.remove('error');
-    continueBtn.disabled = false;
-    continueBtn.textContent = 'Continue';
-
-    // Show modal
-    modal.style.display = 'flex';
-    emailInput.focus();
-}
-
-// Hide the email capture modal
-function hideEmailCaptureModal() {
-    const modal = document.getElementById('emailCaptureModal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
-}
-
-// Validate email format
-function isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-}
-
-// Log paywall hit to Supabase
-async function logPaywallHit(email, feature) {
-    try {
-        console.log('[PAYWALL] Logging hit:', { email, feature });
-
-        const response = await fetch(PAYWALL_API, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                email: email,
-                extension_id: 'tab-suspender-pro',
-                feature_attempted: feature
-            }),
-            signal: AbortSignal.timeout(10000)
-        });
-
-        if (!response.ok) {
-            console.warn('[PAYWALL] API returned non-OK status:', response.status);
-        } else {
-            console.log('[PAYWALL] Successfully logged paywall hit');
-        }
-
-        return true;
-    } catch (error) {
-        console.error('[PAYWALL] Error logging paywall hit:', error);
-        // Return true to continue flow even if API fails
-        return true;
-    }
-}
-
-// Handle Continue button click
-async function handleEmailContinue() {
-    const emailInput = document.getElementById('emailInput');
-    const emailError = document.getElementById('emailError');
-    const continueBtn = document.getElementById('modalContinueBtn');
-
-    const email = emailInput.value.trim();
-
-    // Validate email
-    if (!isValidEmail(email)) {
-        emailInput.classList.add('error');
-        emailError.style.display = 'block';
-        return;
-    }
-
-    // Clear error state
-    emailInput.classList.remove('error');
-    emailError.style.display = 'none';
-
-    // Show loading state
-    continueBtn.disabled = true;
-    continueBtn.textContent = 'Please wait...';
-
-    // Save email to storage
-    try {
-        await chrome.storage.local.set({ userEmail: email });
-        savedUserEmail = email;
-        console.log('[EMAIL] Saved email to storage');
-    } catch (error) {
-        console.error('[EMAIL] Error saving email:', error);
-    }
-
-    // Log to Supabase (don't block on failure)
-    await logPaywallHit(email, currentFeatureAttempted);
-
-    // Hide modal
-    hideEmailCaptureModal();
-
-    // Redirect to upgrade page with parameters
-    const upgradeUrl = `https://zovo.one/upgrade?email=${encodeURIComponent(email)}&feature=${encodeURIComponent(currentFeatureAttempted)}&ext=tab-suspender-pro`;
-    chrome.tabs.create({ url: upgradeUrl });
-}
-
-// Handle Maybe Later button click
-function handleMaybeLater() {
-    hideEmailCaptureModal();
-
-    // Redirect to upgrade page without email parameter
-    const upgradeUrl = `https://zovo.one/upgrade?feature=${encodeURIComponent(currentFeatureAttempted)}&ext=tab-suspender-pro`;
-    chrome.tabs.create({ url: upgradeUrl });
-}
-
-// Setup modal event listeners
-function setupEmailModalListeners() {
-    const continueBtn = document.getElementById('modalContinueBtn');
-    const maybeLaterBtn = document.getElementById('modalMaybeLaterBtn');
-    const emailInput = document.getElementById('emailInput');
-    const modal = document.getElementById('emailCaptureModal');
-    const getLicenseLink = document.getElementById('getLicenseLink');
-
-    if (continueBtn) {
-        continueBtn.addEventListener('click', handleEmailContinue);
-    }
-
-    if (maybeLaterBtn) {
-        maybeLaterBtn.addEventListener('click', handleMaybeLater);
-    }
-
-    // "Get Pro License" link triggers email capture
-    if (getLicenseLink) {
-        getLicenseLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            showEmailCaptureModal('Pro License');
-        });
-    }
-
-    // Enter key to submit
-    if (emailInput) {
-        emailInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                handleEmailContinue();
-            }
-        });
-
-        // Clear error on input
-        emailInput.addEventListener('input', () => {
-            emailInput.classList.remove('error');
-            document.getElementById('emailError').style.display = 'none';
-        });
-    }
-
-    // Close on overlay click (outside modal content)
-    if (modal) {
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                handleMaybeLater();
-            }
-        });
-    }
-}
-
-/**
- * License Verification System
- * SECURITY: Server-side verification required - localStorage alone is not trusted
- */
-
-const VERIFY_API = 'https://xggdjlurppfcytxqoozs.supabase.co/functions/v1/verify-extension-license';
-const REVERIFY_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
-const OFFLINE_GRACE_PERIOD_MS = 72 * 60 * 60 * 1000; // 72 hours grace period when offline
-
-// Check license on popup load with server-side re-verification
-async function checkLicense() {
-    try {
-        const data = await chrome.storage.local.get(['licenseKey', 'isPro', 'verifiedAt', 'serverSignature']);
-
-        if (data.isPro && data.licenseKey) {
-            const now = Date.now();
-            const lastVerified = data.verifiedAt || 0;
-            const timeSinceVerification = now - lastVerified;
-
-            // SECURITY: Always re-verify if no server signature exists (prevents localStorage manipulation)
-            if (!data.serverSignature) {
-                console.log('[LICENSE] No server signature found, re-verifying...');
-                await reVerifyLicense(data.licenseKey);
-                return;
-            }
-
-            // Check if re-verification is needed (every 24 hours)
-            if (timeSinceVerification > REVERIFY_INTERVAL_MS) {
-                console.log('[LICENSE] Re-verification needed (last verified:', new Date(lastVerified).toISOString(), ')');
-                await reVerifyLicense(data.licenseKey);
-                return;
-            }
-
-            // License is valid and recently verified
-            console.log('[LICENSE] License valid, last verified:', Math.round(timeSinceVerification / 1000 / 60), 'minutes ago');
-            isPro = true;
-            showProActive();
-            unlockProFeatures();
-        } else {
-            // No license stored
-            isPro = false;
-            showLicensePrompt();
-        }
-    } catch (error) {
-        console.error('[LICENSE] Error checking license:', error);
-        showLicensePrompt();
-    }
-}
-
-// Re-verify existing license with server
-async function reVerifyLicense(licenseKey) {
-    try {
-        console.log('[LICENSE] Starting re-verification...');
-
-        const result = await verifyLicense(licenseKey);
-
-        if (result.valid) {
-            // Update verification timestamp and server signature
-            await chrome.storage.local.set({
-                isPro: true,
-                verifiedAt: Date.now(),
-                serverSignature: result.signature || generateLocalSignature(licenseKey)
-            });
-
-            isPro = true;
-            showProActive();
-            unlockProFeatures();
-            console.log('[LICENSE] Re-verification successful');
-        } else {
-            // License is no longer valid - could be revoked, expired, etc.
-            console.log('[LICENSE] Re-verification failed:', result.error);
-            await handleLicenseRevoked(result.error);
-        }
-    } catch (error) {
-        console.error('[LICENSE] Re-verification error:', error);
-
-        // Offline handling: check grace period
-        const data = await chrome.storage.local.get(['verifiedAt']);
-        const timeSinceVerification = Date.now() - (data.verifiedAt || 0);
-
-        if (timeSinceVerification < OFFLINE_GRACE_PERIOD_MS) {
-            // Within grace period - allow Pro features but show warning
-            console.log('[LICENSE] Offline, within grace period');
-            isPro = true;
-            showProActive();
-            unlockProFeatures();
-            showOfflineWarning();
-        } else {
-            // Grace period expired - revert to free
-            console.log('[LICENSE] Offline, grace period expired');
-            await handleLicenseRevoked('Unable to verify license. Please check your internet connection.');
-        }
-    }
-}
-
-// Handle revoked/invalid license
-async function handleLicenseRevoked(reason) {
-    // Clear Pro status
-    await chrome.storage.local.set({
-        isPro: false,
-        serverSignature: null
-    });
-    // Keep licenseKey so user can see what was entered
-
-    isPro = false;
-    showLicensePrompt();
-
-    // Show message to user
-    const status = document.getElementById('licenseStatus');
-    if (status) {
-        status.className = 'license-status error';
-        status.textContent = '⚠️ ' + (reason || 'License verification failed');
-        status.style.display = 'block';
-    }
-}
-
-// Show offline warning
-function showOfflineWarning() {
-    const active = document.getElementById('licenseActive');
-    if (!active) return;
-
-    // Check if warning already exists
-    if (active.querySelector('.offline-warning')) return;
-
-    const warning = document.createElement('div');
-    warning.className = 'offline-warning';
-    warning.style.cssText = 'margin-top: 8px; padding: 6px 10px; background: rgba(245, 158, 11, 0.1); border: 1px solid #F59E0B; border-radius: 6px; font-size: 11px; color: #F59E0B;';
-    warning.textContent = '⚠️ Offline mode - will re-verify when online';
-    active.appendChild(warning);
-}
-
-// Generate a local signature (fallback when server doesn't provide one)
-function generateLocalSignature(licenseKey) {
-    // Simple hash for tamper detection (not cryptographically secure, but adds a layer)
-    const timestamp = Date.now();
-    const data = licenseKey + ':' + timestamp + ':tab_suspender_pro';
-    let hash = 0;
-    for (let i = 0; i < data.length; i++) {
-        const char = data.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash;
-    }
-    return btoa(hash.toString() + ':' + timestamp);
-}
-
-// Verify license key via API
-async function verifyLicense(licenseKey) {
-    try {
-        const response = await fetch(VERIFY_API, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                license_key: licenseKey,
-                extension: 'tab_suspender_pro'
-            }),
-            // Timeout after 10 seconds
-            signal: AbortSignal.timeout(10000)
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || 'Verification failed');
-        }
-
-        const result = await response.json();
-        console.log('[LICENSE] Server response:', { valid: result.valid, tier: result.tier });
-        return result;
-    } catch (error) {
-        console.error('[LICENSE] Verification error:', error);
-
-        // Differentiate between network errors and server errors
-        if (error.name === 'AbortError' || error.name === 'TypeError') {
-            return { valid: false, error: 'Network error - please check your connection', offline: true };
-        }
-
-        return { valid: false, error: error.message || 'Unable to verify license' };
-    }
-}
-
-// Handle license activation
-async function activatePro() {
-    const input = document.getElementById('licenseInput');
-    const status = document.getElementById('licenseStatus');
-    const activateBtn = document.getElementById('activateBtn');
-
-    const key = input.value.trim().toUpperCase();
-
-    // Validate format
-    if (!key.match(/^ZOVO-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/)) {
-        status.className = 'license-status error';
-        status.textContent = '❌ Invalid format. Use: ZOVO-XXXX-XXXX-XXXX-XXXX';
-        status.style.display = 'block';
-        return;
-    }
-
-    // Show loading state
-    status.className = 'license-status loading';
-    status.textContent = '⏳ Verifying license...';
-    status.style.display = 'block';
-    activateBtn.disabled = true;
-    activateBtn.textContent = 'Verifying...';
-
-    // Verify license with server (SECURITY: Server verification required)
-    const result = await verifyLicense(key);
-
-    if (result.valid) {
-        // Save license to storage WITH server signature
-        await chrome.storage.local.set({
-            licenseKey: key,
-            isPro: true,
-            tier: result.tier || 'pro',
-            verifiedAt: Date.now(),
-            serverSignature: result.signature || generateLocalSignature(key)
-        });
-
-        isPro = true;
-
-        // Show success
-        status.className = 'license-status success';
-        status.textContent = '✅ Pro Activated!';
-
-        // Switch to Pro active view after 1 second
-        setTimeout(() => {
-            showProActive();
-            unlockProFeatures();
-        }, 1000);
-    } else {
-        // Show error
-        status.className = 'license-status error';
-
-        if (result.offline) {
-            status.textContent = '⚠️ ' + result.error;
-        } else {
-            status.textContent = '❌ ' + (result.error || 'Invalid license key');
-        }
-
-        status.style.display = 'block';
-        activateBtn.disabled = false;
-        activateBtn.textContent = 'Activate';
-    }
-}
-
-// Show license prompt UI
-function showLicensePrompt() {
-    const section = document.getElementById('licenseSection');
-    const prompt = document.getElementById('licensePrompt');
-    const active = document.getElementById('licenseActive');
-    
-    if (section) section.style.display = 'block';
-    if (prompt) prompt.style.display = 'block';
-    if (active) active.style.display = 'none';
-}
-
-// Show Pro active UI
-function showProActive() {
-    const section = document.getElementById('licenseSection');
-    const prompt = document.getElementById('licensePrompt');
-    const active = document.getElementById('licenseActive');
-    const headerBadge = document.getElementById('headerProBadge');
-
-    if (section) section.style.display = 'block';
-    if (prompt) prompt.style.display = 'none';
-    if (active) active.style.display = 'block';
-    if (headerBadge) headerBadge.style.display = 'inline-block';
-}
-
-// Unlock Pro features
-function unlockProFeatures() {
-    // Remove Pro locks from UI elements
-    document.querySelectorAll('.pro-badge').forEach(el => {
-        el.style.display = 'none';
-    });
-    
-    document.querySelectorAll('.pro-locked').forEach(el => {
-        el.classList.remove('pro-locked');
-        el.classList.add('pro-unlocked');
-    });
-    
-    document.querySelectorAll('.upgrade-prompt').forEach(el => {
-        el.style.display = 'none';
-    });
-    
-    console.log('Pro features unlocked');
-}
-
-// Format license key as user types
-function formatLicenseInput() {
-    const input = document.getElementById('licenseInput');
-    if (!input) return;
-    
-    input.addEventListener('input', (e) => {
-        let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-        
-        // Format as ZOVO-XXXX-XXXX-XXXX-XXXX
-        if (value.startsWith('ZOVO')) {
-            value = value.substring(4);
-        }
-        
-        const parts = [];
-        for (let i = 0; i < value.length; i += 4) {
-            parts.push(value.substring(i, i + 4));
-        }
-        
-        e.target.value = 'ZOVO-' + parts.join('-');
-    });
-}
-
-// Initialize license system
-function initLicenseSystem() {
-    checkLicense();
-    formatLicenseInput();
-    
-    const activateBtn = document.getElementById('activateBtn');
-    if (activateBtn) {
-        activateBtn.addEventListener('click', activatePro);
-    }
-    
-    // Enter key to activate
-    const input = document.getElementById('licenseInput');
-    if (input) {
-        input.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                activatePro();
-            }
-        });
-    }
-}
+// Community Edition - License verification system removed (all features unlocked)
 
