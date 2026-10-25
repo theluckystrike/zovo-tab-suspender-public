@@ -21,10 +21,19 @@ const tabUrl = document.getElementById('tabUrl');
 const memorySaved = document.getElementById('memorySaved');
 const timeSuspended = document.getElementById('timeSuspended');
 
+// Mark shown before the original title in the tab strip (issue #1).
+// The title text and the favicon stay as they were on the original page.
+const SUSPENDED_MARK = '💤';
+
+// Put the mark in front of the title once
+function suspendedTitle(text) {
+    return text.startsWith(`${SUSPENDED_MARK} `) ? text : `${SUSPENDED_MARK} ${text}`;
+}
+
 // Initialize page
 function init() {
-    // Set page title
-    pageTitle.textContent = `${title} (Suspended)`;
+    // Set page title: sleep mark + original title
+    pageTitle.textContent = suspendedTitle(title);
 
     // Set favicon with placeholder fallback
     if (favicon) {

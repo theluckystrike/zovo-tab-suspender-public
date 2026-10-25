@@ -141,6 +141,7 @@ This document provides a comprehensive test checklist for verifying the function
 - [ ] "Suspend All Tabs" button suspends all eligible tabs
 - [ ] Suspended tabs show custom suspended.html page
 - [ ] Original URL, title, and favicon preserved in suspended page
+- [ ] Suspended tab title starts with 💤 followed by the unchanged original title
 - [ ] Badge count updates to show suspended tab count
 
 ### Auto-Suspension
