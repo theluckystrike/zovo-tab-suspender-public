@@ -280,6 +280,7 @@ chrome-extension://{extensionId}/suspended.html?url={encodedUrl}&title={title}&f
 
 The suspended page displays:
 - Original page title and favicon
+- A 💤 mark before the original title in the tab strip, so a suspended tab is easy to see
 - Time since suspension
 - "Click to restore" functionality
 - Original URL for reference
